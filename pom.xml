@@ -1,0 +1,22 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>net.anfoya</groupId>
+	<artifactId>anfoya-libs</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<modules>
+		<module>anfoya-cluster</module>
+		<module>anfoya-easylist</module>
+		<module>anfoya-gmail</module>
+		<module>anfoya-javafx</module>
+		<module>anfoya-net</module>
+		<module>anfoya-smb</module>
+		<module>anfoya-tag</module>
+		<module>anfoya-tools</module>
+	</modules>
+</project>
