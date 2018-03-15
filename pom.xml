@@ -12,7 +12,6 @@
 	<modules>
 		<module>anfoya-cluster</module>
 		<module>anfoya-easylist</module>
-		<module>anfoya-gmail</module>
 		<module>anfoya-javafx</module>
 		<module>anfoya-net</module>
 		<module>anfoya-smb</module>
