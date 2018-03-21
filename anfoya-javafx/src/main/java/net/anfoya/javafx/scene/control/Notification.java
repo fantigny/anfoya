@@ -234,7 +234,7 @@ public class Notification {
          * @param IMAGE
          */
         public void notify(final String TITLE, final String MESSAGE, final Image IMAGE) {
-        	notify(TITLE, MESSAGE, IMAGE);
+        		notify(TITLE, MESSAGE, IMAGE);
         }
         public void notify(final String TITLE, final String MESSAGE, final Image IMAGE, Runnable CALLBACK) {
             notify(new Notification(TITLE, MESSAGE, IMAGE, CALLBACK));
@@ -246,7 +246,7 @@ public class Notification {
          * @param MESSAGE
          */
         public void notifyInfo(final String TITLE, final String MESSAGE) {
-        	notifyInfo(TITLE, MESSAGE, null);
+        		notifyInfo(TITLE, MESSAGE, null);
         }
         public void notifyInfo(final String TITLE, final String MESSAGE, Runnable CALLBACK) {
             notify(new Notification(TITLE, MESSAGE, Notification.INFO_ICON, CALLBACK));
@@ -258,7 +258,7 @@ public class Notification {
          * @param MESSAGE
          */
         public void notifyWarning(final String TITLE, final String MESSAGE) {
-        	notifyWarning(TITLE, MESSAGE, null);
+        		notifyWarning(TITLE, MESSAGE, null);
         }
         public void notifyWarning(final String TITLE, final String MESSAGE, Runnable CALLBACK) {
             notify(new Notification(TITLE, MESSAGE, Notification.WARNING_ICON, CALLBACK));
@@ -270,7 +270,7 @@ public class Notification {
          * @param MESSAGE
          */
         public void notifySuccess(final String TITLE, final String MESSAGE) {
-        	notifySuccess(TITLE, MESSAGE, null);
+        		notifySuccess(TITLE, MESSAGE, null);
         }
         public void notifySuccess(final String TITLE, final String MESSAGE, Runnable CALLBACK) {
             notify(new Notification(TITLE, MESSAGE, Notification.SUCCESS_ICON, CALLBACK));
@@ -282,7 +282,7 @@ public class Notification {
          * @param MESSAGE
          */
         public void notifyError(final String TITLE, final String MESSAGE) {
-        	notifyError(TITLE, MESSAGE, null);
+        		notifyError(TITLE, MESSAGE, null);
         }
         public void notifyError(final String TITLE, final String MESSAGE, Runnable CALLBACK) {
             notify(new Notification(TITLE, MESSAGE, Notification.ERROR_ICON, CALLBACK));
