@@ -296,7 +296,7 @@ public class Notification {
             for (int i = 0 ; i < popups.size() ; i++) {
                 switch (popupLocation) {
                     case TOP_LEFT: case TOP_CENTER: case TOP_RIGHT: popups.get(i).setY(popups.get(i).getY() + height + spacingY); break;
-                    default: popups.get( i ).setY( popups.get( i ).getY() - height - spacingY);
+                    default: popups.get(i).setY(popups.get(i).getY() - height - spacingY);
                 }
             }
         }
