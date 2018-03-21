@@ -3,6 +3,7 @@ package net.anfoya.javafx.scene.control;
 import javafx.beans.property.StringProperty;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.TextField;
@@ -21,6 +22,8 @@ public class ResetTextField extends StackPane {
 	private final TextField delegate = new TextField();
 	private final Group resetButton = getResetButton();
 
+	private Point2D dragStart;
+
 	public ResetTextField() {
 		getChildren().addAll(delegate, resetButton);
 		setAlignment(Pos.CENTER_RIGHT);
@@ -33,6 +36,13 @@ public class ResetTextField extends StackPane {
 			} else {
 				resetButton.setVisible(true);
 			}
+		});
+		delegate.setOnMousePressed(e -> {
+			dragStart = new Point2D(e.getSceneX(), e.getSceneY());
+		});
+		delegate.setOnMouseDragged(e -> {
+			getScene().getWindow().setX(e.getScreenX() - dragStart.getX());
+			getScene().getWindow().setY(e.getScreenY() - getScene().getY() - dragStart.getY());
 		});
 
 		resetButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
