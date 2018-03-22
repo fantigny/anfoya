@@ -7,14 +7,13 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,18 +35,19 @@ public class FileDatabase {
 		files = new TreeSet<>();
 	}
 
-	public void init() throws IOException {
-		refreshFileSet();
-		if (needRebuild()) {
+	public void init() throws FileDatabaseException {
+		try {
+			refreshFileSet(Files.walk(path));
 			buildFolders();
-			cleanUp();
-			refreshFileSet();
+			cleanUp(Files.walk(path));
+		} catch (final IOException e) {
+			throw new FileDatabaseException("", e);
 		}
 	}
 
-	private void refreshFileSet() throws IOException {
+	private void refreshFileSet(Stream<Path> fileStream) {
 		// add new files
-		Files.walk(path)
+		fileStream
 			.filter(p -> !Files.isDirectory(p))
 			.forEach(p -> files.add(p));
 
@@ -68,7 +68,7 @@ public class FileDatabase {
 			folderFileCount.put(folder, count == null? 1: ++count);
 		});
 
-		return true || folderFileCount
+		return folderFileCount
 				.values()
 				.stream()
 				.filter(c -> c > maxFilesPerFolder)
@@ -76,42 +76,54 @@ public class FileDatabase {
 				.isPresent();
 	}
 
-	private void buildFolders() throws IOException {
+	private void buildFolders() {
 		final Map<Path, Set<Path>> folderFiles = new TreeMap<>();
 
 		// build new folder structure
 		for(final Path file: files) {
 			final Path destination = getDestinationFolder(file);
-			final Optional<Entry<Path, Set<Path>>> folderEntry = folderFiles.entrySet()
-					.stream()
-					.filter(e -> {
-						final String existing = e.getKey().getFileName().toString();
-						final String current = destination.getFileName().toString();
-						return existing.compareTo(current) <= 0 && e.getValue().size() < maxFilesPerFolder;
-					})
-					.findFirst();
-			if (folderEntry.isPresent()) {
-				folderEntry.get().getValue().add(file);
+			Set<Path> files = null;
+			for(final Entry<Path, Set<Path>> e: folderFiles.entrySet()) {
+				if (e.getKey().compareTo(destination) <= 0) {
+					if (e.getValue().size() < maxFilesPerFolder) {
+						files = e.getValue();
+						break;
+					}
+				}
+			}
+			if (files == null) {
+				folderFiles.put(destination, new TreeSet<>(Arrays.asList(file)));
 			} else {
-				folderFiles.put(destination, new HashSet<>(Arrays.asList(file)));
+				files.add(file);
 			}
 		}
 
 		// implement it
-		for(final Entry<Path, Set<Path>> e: folderFiles.entrySet()) {
+		folderFiles.entrySet().forEach(e -> {
 			final Path folder = e.getKey();
 			for(final Path file: e.getValue()) {
+				final Path newFile = Paths.get(folder.toString(), file.getFileName().toString());
+				LOGGER.debug("implement {}", newFile.toString());
+
 				if (!folder.equals(file.getParent())) {
 					if (Files.notExists(folder)) {
 						LOGGER.info("create folder {}", folder.toString());
-						Files.createDirectory(folder);
+						try {
+							Files.createDirectory(folder);
+						} catch (final IOException e1) {
+							LOGGER.error("create folder {}", folder.toString(), e);
+							break;
+						}
 					}
-					final Path newFile = Paths.get(folder.toString(), file.getFileName().toString());
 					LOGGER.info("move file {} to {}", file.toString(), newFile.toString());
-					Files.move(file, newFile, StandardCopyOption.REPLACE_EXISTING);
+					try {
+						Files.move(file, newFile, StandardCopyOption.REPLACE_EXISTING);
+					} catch (final IOException e1) {
+						LOGGER.error("move file {} to {}", file.toString(), newFile.toString(), e);
+					}
 				}
 			}
-		}
+		});
 	}
 
 	private Path getDestinationFolder(Path file) {
@@ -119,14 +131,12 @@ public class FileDatabase {
 		while(folderName.length() < folderNameLength) {
 			folderName += "_";
 		}
-		folderName = folderName.replaceAll(" ", "_");
 		folderName = folderName.substring(0, folderNameLength + 1).toUpperCase();
 		return Paths.get(path.toString(), folderName);
 	}
 
-	private void cleanUp() throws IOException {
-		Files
-			.walk(path)
+	private void cleanUp(Stream<Path> fileStream) {
+		fileStream
 			.filter(p -> {
 				try {
 					return Files.isDirectory(p) && !Files.list(p).findAny().isPresent();
