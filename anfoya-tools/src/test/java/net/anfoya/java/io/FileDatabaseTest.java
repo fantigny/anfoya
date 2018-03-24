@@ -8,6 +8,6 @@ public class FileDatabaseTest {
 
 	@Test
 	public void test() throws FileDatabaseException {
-		new FileDatabase(Paths.get("/Volumes/movies/dl"), 33, 4).init();
+		new FileDatabase(Paths.get("/Volumes/movies/dl"), 20, 4).init();
 	}
 }

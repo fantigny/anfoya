@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +23,7 @@ public class FileDatabase {
 	private final int maxFilesPerFolder;
 	private final int folderNameLength;
 
+	private final Comparator<Path> pathComparator;
 	private final Set<Path> files;
 
 	public FileDatabase(Path path, int maxFilesPerFolder, int folderNameLength) {
@@ -29,7 +31,22 @@ public class FileDatabase {
 		this.maxFilesPerFolder = maxFilesPerFolder;
 		this.folderNameLength = folderNameLength;
 
-		files = new TreeSet<>();
+		pathComparator = new Comparator<Path>() {
+			@Override public int compare(Path p1, Path p2) {
+				final char c1 = p1.getFileName().toString().charAt(0);
+				final char c2 = p2.getFileName().toString().charAt(0);
+
+				if (Character.isLetterOrDigit(c1) && !Character.isLetterOrDigit(c2)) {
+					return 1;
+				}
+				if (!Character.isLetterOrDigit(c1) && Character.isLetterOrDigit(c2)) {
+					return -1;
+				}
+
+				return p1.getFileName().compareTo(p2.getFileName());
+			}
+		};
+		files = new TreeSet<>(pathComparator);
 	}
 
 	public void init() throws FileDatabaseException {
@@ -64,8 +81,8 @@ public class FileDatabase {
 		Set<Path> files = null;
 		for(final Path file: this.files) {
 			final Path destination = getDestinationPath(file);
-			if (files == null || files.size() == maxFilesPerFolder && !folderFiles.containsKey(destination)) {
-				files = new TreeSet<>();
+			if (files == null || files.size() == maxFilesPerFolder) {
+				files = new TreeSet<>(pathComparator);
 				folderFiles.put(destination, files);
 			}
 			files.add(file);
