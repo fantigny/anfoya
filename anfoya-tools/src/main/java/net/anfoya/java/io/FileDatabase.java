@@ -5,11 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -60,42 +57,18 @@ public class FileDatabase {
 		}
 	}
 
-	private boolean needRebuild() {
-		final Map<Path, Long> folderFileCount = new HashMap<>();
-		files.stream().forEach(f -> {
-			final Path folder = f.getParent();
-			Long count = folderFileCount.get(folder);
-			folderFileCount.put(folder, count == null? 1: ++count);
-		});
-
-		return folderFileCount
-				.values()
-				.stream()
-				.filter(c -> c > maxFilesPerFolder)
-				.findFirst()
-				.isPresent();
-	}
-
 	private void buildFolders() {
 		final Map<Path, Set<Path>> folderFiles = new TreeMap<>();
 
 		// build new folder structure
-		for(final Path file: files) {
-			final Path destination = getDestinationFolder(file);
-			Set<Path> files = null;
-			for(final Entry<Path, Set<Path>> e: folderFiles.entrySet()) {
-				if (e.getKey().compareTo(destination) <= 0) {
-					if (e.getValue().size() < maxFilesPerFolder) {
-						files = e.getValue();
-						break;
-					}
-				}
+		Set<Path> files = null;
+		for(final Path file: this.files) {
+			final Path destination = getDestinationPath(file);
+			if (files == null || files.size() == maxFilesPerFolder && !folderFiles.containsKey(destination)) {
+				files = new TreeSet<>();
+				folderFiles.put(destination, files);
 			}
-			if (files == null) {
-				folderFiles.put(destination, new TreeSet<>(Arrays.asList(file)));
-			} else {
-				files.add(file);
-			}
+			files.add(file);
 		}
 
 		// implement it
@@ -126,13 +99,10 @@ public class FileDatabase {
 		});
 	}
 
-	private Path getDestinationFolder(Path file) {
-		String folderName  = file.getFileName().toString();
-		while(folderName.length() < folderNameLength) {
-			folderName += "_";
-		}
-		folderName = folderName.substring(0, folderNameLength + 1).toUpperCase();
-		return Paths.get(path.toString(), folderName);
+	private Path getDestinationPath(Path file) {
+		final String filename  = file.getFileName().toString();
+		return Paths.get(path.toString(), filename
+				.substring(0, Math.min(filename.length(), folderNameLength + 1)));
 	}
 
 	private void cleanUp(Stream<Path> fileStream) {
