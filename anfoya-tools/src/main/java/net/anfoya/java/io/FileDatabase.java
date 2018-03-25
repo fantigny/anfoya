@@ -6,11 +6,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -20,15 +20,15 @@ public class FileDatabase {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileDatabase.class);
 
 	private final Path path;
-	private final int maxFilesPerFolder;
+	private final int folderFileCount;
 	private final int folderNameLength;
 
 	private final Comparator<Path> pathComparator;
 	private final Set<Path> files;
 
-	public FileDatabase(Path path, int maxFilesPerFolder, int folderNameLength) {
+	public FileDatabase(Path path, int folderFileCount, int folderNameLength) {
 		this.path = path;
-		this.maxFilesPerFolder = maxFilesPerFolder;
+		this.folderFileCount = folderFileCount;
 		this.folderNameLength = folderNameLength;
 
 		pathComparator = new Comparator<Path>() {
@@ -60,72 +60,77 @@ public class FileDatabase {
 	}
 
 	private void refreshFileSet(Stream<Path> fileStream) {
+		LOGGER.debug("listing files from {}", path.toString());
+
 		// add new files
-		fileStream
-			.filter(p -> !Files.isDirectory(p))
-			.forEach(p -> files.add(p));
+		files.addAll(fileStream
+				.filter(p -> !Files.isDirectory(p))
+				.collect(Collectors.toSet()));
 
 		// remove non existing files
-		for(final Iterator<Path> i=files.iterator(); i.hasNext();) {
-			final Path file = i.next();
-			if (Files.notExists(file)) {
-				i.remove();
-			}
-		}
+		files.removeIf(f -> Files.notExists(f));
+
+		LOGGER.debug("found {} files", files.size());
 	}
 
 	private void buildFolders() {
-		final Map<Path, Set<Path>> folderFiles = new TreeMap<>();
+		final NavigableMap<Path, Set<Path>> folderFiles = new TreeMap<>();
 
 		// build new folder structure
-		Set<Path> files = null;
-		for(final Path file: this.files) {
-			final Path destination = getDestinationPath(file);
-			if (files == null || files.size() == maxFilesPerFolder) {
-				files = new TreeSet<>(pathComparator);
-				folderFiles.put(destination, files);
-			}
-			files.add(file);
-		}
+		files
+			.stream()
+			.forEach(f -> {
+				final Path destination = getDestination(f);
+				Set<Path> files = folderFiles.isEmpty()? null: folderFiles.lastEntry().getValue();
+				if (files == null || files.size() == folderFileCount) {
+					files = new TreeSet<>(pathComparator);
+					folderFiles.put(destination, files);
+				}
+				files.add(f);
+			});
 
 		// implement it
-		folderFiles.entrySet().forEach(e -> {
-			final Path folder = e.getKey();
-			for(final Path file: e.getValue()) {
-				final Path newFile = Paths.get(folder.toString(), file.getFileName().toString());
-				LOGGER.debug("implement {}", newFile.toString());
-
-				if (!folder.equals(file.getParent())) {
-					if (Files.notExists(folder)) {
-						LOGGER.info("create folder {}", folder.toString());
+		folderFiles
+			.entrySet()
+			.forEach(e -> {
+				final Path folder = e.getKey();
+				for(final Path file: e.getValue()) {
+					final Path newFile = Paths.get(folder.toString(), file.getFileName().toString());
+					LOGGER.debug("implement {}", newFile.toString());
+					if (!newFile.equals(file)) {
+						if (!folder.equals(file.getParent()) && Files.notExists(folder)) {
+							LOGGER.info("create folder {}", folder.toString());
+							try {
+								Files.createDirectory(folder);
+							} catch (final IOException e1) {
+								LOGGER.error("create folder {}", folder.toString(), e);
+								break;
+							}
+						}
+						LOGGER.info("move file to {} (from {})", newFile.toString(), file.toString());
 						try {
-							Files.createDirectory(folder);
+							Files.move(file, newFile, StandardCopyOption.REPLACE_EXISTING);
 						} catch (final IOException e1) {
-							LOGGER.error("create folder {}", folder.toString(), e);
-							break;
+							LOGGER.error("move file to {} (from {})", newFile.toString(), file.toString(), e);
 						}
 					}
-					LOGGER.info("move file {} to {}", file.toString(), newFile.toString());
-					try {
-						Files.move(file, newFile, StandardCopyOption.REPLACE_EXISTING);
-					} catch (final IOException e1) {
-						LOGGER.error("move file {} to {}", file.toString(), newFile.toString(), e);
-					}
 				}
-			}
-		});
+			});
 	}
 
-	private Path getDestinationPath(Path file) {
-		final String filename  = file.getFileName().toString();
-		return Paths.get(path.toString(), filename
-				.substring(0, Math.min(filename.length(), folderNameLength + 1)));
+	private Path getDestination(Path file) {
+		// build destination path from filename
+		final String filename = file.getFileName().toString();
+		final String foldername = filename.substring(0, Math.min(filename.length(), folderNameLength + 1));
+		return Paths.get(path.toString(), foldername);
 	}
 
 	private void cleanUp(Stream<Path> fileStream) {
+		// remove empty folders
 		fileStream
 			.filter(p -> {
 				try {
+					// check folder is empty
 					return Files.isDirectory(p) && !Files.list(p).findAny().isPresent();
 				} catch (final IOException e) {
 					return false;
