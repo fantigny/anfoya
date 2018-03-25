@@ -16,8 +16,8 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FileDatabase {
-	private static final Logger LOGGER = LoggerFactory.getLogger(FileDatabase.class);
+public class FileOrganiser {
+	private static final Logger LOGGER = LoggerFactory.getLogger(FileOrganiser.class);
 
 	private final Path path;
 	private final int folderFileCount;
@@ -26,7 +26,7 @@ public class FileDatabase {
 	private final Comparator<Path> pathComparator;
 	private final Set<Path> files;
 
-	public FileDatabase(Path path, int folderFileCount, int folderNameLength) {
+	public FileOrganiser(Path path, int folderFileCount, int folderNameLength) {
 		this.path = path;
 		this.folderFileCount = folderFileCount;
 		this.folderNameLength = folderNameLength;
@@ -49,13 +49,13 @@ public class FileDatabase {
 		files = new TreeSet<>(pathComparator);
 	}
 
-	public void init() throws FileDatabaseException {
+	public void init() throws FileOrganiserException {
 		try {
 			refreshFileSet(Files.walk(path));
 			buildFolders();
 			cleanUp(Files.walk(path));
 		} catch (final IOException e) {
-			throw new FileDatabaseException("", e);
+			throw new FileOrganiserException("", e);
 		}
 	}
 

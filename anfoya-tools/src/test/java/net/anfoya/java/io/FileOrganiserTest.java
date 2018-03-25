@@ -8,11 +8,11 @@ import java.nio.file.Paths;
 
 import org.junit.Test;
 
-public class FileDatabaseTest {
+public class FileOrganiserTest {
 
-	@Test
-	public void test() throws FileDatabaseException {
-		new FileDatabase(Paths.get("src/test/resources/testFiles"), 3, 4).init();
+	@Test public void test() throws FileOrganiserException {
+
+		new FileOrganiser(Paths.get("src/test/resources/testFiles"), 3, 4).init();
 
 		assertTrue(Files.exists(Paths.get("src/test/resources/testFiles/[test/[test1.txt")));
 		assertTrue(Files.exists(Paths.get("src/test/resources/testFiles/[test/[test2.txt")));
@@ -48,7 +48,7 @@ public class FileDatabaseTest {
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/testA3/testAB1.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/testA3/testZA1.txt")));
 
-		new FileDatabase(Paths.get("src/test/resources/testFiles"), 4, 5).init();
+		new FileOrganiser(Paths.get("src/test/resources/testFiles"), 4, 5).init();
 
 		assertTrue(Files.exists(Paths.get("src/test/resources/testFiles/[test1/[test1.txt")));
 		assertTrue(Files.exists(Paths.get("src/test/resources/testFiles/[test1/[test2.txt")));
