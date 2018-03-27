@@ -23,6 +23,8 @@ import net.anfoya.java.util.VoidCallback;
 
 public class FileBrowser extends Application {
 	private static final Path SOURCE = Paths.get("/Volumes/movies/dl/");
+	protected static final int FILE_COUNT = 20;
+	protected static final int MAX_FILE_NAME_LENGTH = 4;
 
 	private FolderOrganiser organiser;
 	private ExecutorService executor;
@@ -65,7 +67,7 @@ public class FileBrowser extends Application {
 			@Override protected Collection<String> call() throws Exception {
 				return organiser
 						.reload()
-						.organise(20, 4)
+						.organise(FILE_COUNT, MAX_FILE_NAME_LENGTH)
 						.cleanUp()
 						.getFilenames();
 			}
