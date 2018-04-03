@@ -1,5 +1,6 @@
 package net.anfoya.java.nio;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 public class FolderOrganiser {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FolderOrganiser.class);
+	private static final String DUPLICATE = "__DUPLICATE__";
 	private static final Comparator<String> FILENAME_COMPARATOR = new Comparator<String>() { // allows special characters to be sorted first
 		@Override public int compare(String filename1, String filename2) {
 			final char c1 = filename1.charAt(0), c2 = filename2.charAt(0);
@@ -34,13 +37,19 @@ public class FolderOrganiser {
 	private final Path path;
 
 	private final FileTools fileTools;
-	private final Map<String, Path> files;
+	private final Map<String, Path> filenamesPath;
+
+	private final Path duplicateFolder;
+	private final Set<Path> duplicates;
 
 	public FolderOrganiser(Path path) {
 		this.path = path;
 
 		fileTools = new FileTools();
-		files = new ConcurrentSkipListMap<>(FILENAME_COMPARATOR);
+		filenamesPath = new ConcurrentSkipListMap<>(FILENAME_COMPARATOR);
+
+		duplicateFolder = Paths.get(path.toString(), DUPLICATE);
+		duplicates = new HashSet<>();
 	}
 
 	public FolderOrganiser dry(boolean dry) {
@@ -50,37 +59,47 @@ public class FolderOrganiser {
 	}
 
 	public Set<String> getFilenames() {
-		return Collections.unmodifiableSet(files.keySet());
+		return Collections.unmodifiableSet(filenamesPath.keySet());
 	}
 
 	public Path getPath(String filename) {
-		return files.get(filename);
+		return filenamesPath.get(filename);
+	}
+
+	public boolean exists(String filename) {
+		return filenamesPath.keySet().contains(filename);
 	}
 
 	public FolderOrganiser reload() throws IOException {
 		LOGGER.debug("discovering {}", path);
 
 		// remove non existing files
-		files.entrySet().removeIf(e -> Files.notExists(e.getValue()));
+		filenamesPath.entrySet().removeIf(e -> Files.notExists(e.getValue()));
 
 		// add new files (and count folders)
 		final AtomicInteger folderCount = new AtomicInteger(-1);
 		try (final Stream<Path> stream = Files.walk(path)) {
-			files.putAll(stream
+			filenamesPath.putAll(stream
 					.peek(p -> folderCount.addAndGet(Files.isDirectory(p)? 1: 0))
+					.filter(p -> !p.getParent().equals(duplicateFolder))
 					.filter(p -> !Files.isDirectory(p))
-					.collect(Collectors.toMap(p -> p.getFileName().toString(), p -> p)));
-
+					.collect(Collectors.toMap(
+							p -> p.getFileName().toString()
+							, p -> p
+							, (p1, p2) -> {
+								duplicates.add(p2);
+								return p1;
+							})));
 		}
 
-		LOGGER.info("found {} files in {} folders", files.size(), folderCount.get());
+		LOGGER.info("found {} files in {} folders", filenamesPath.size(), folderCount.get());
 
 		return this;
 	}
 
 	public FolderOrganiser cleanUp() throws IOException {
 		try (final Stream<Path> stream = Files.walk(path)) {
-		// remove empty folders
+			// delete empty folders
 			stream
 				.filter(p -> fileTools.isEmpty(p))
 				.parallel()
@@ -90,12 +109,23 @@ public class FolderOrganiser {
 		return this;
 	}
 
+	public void rename(String filename, String newFilename) throws FileNotFoundException {
+		if (!filenamesPath.containsKey(filename)) {
+			throw new FileNotFoundException(filename);
+		}
+
+		final Path source = filenamesPath.get(filename);
+		final Path target = Paths.get(source.getParent().toString(), newFilename);
+
+		fileTools.moveFile(source, target);
+	}
+
 	public FolderOrganiser organise(int fileCount, int maxNameLength) {
 		final Map<Path, Set<Path>> folderFiles = new HashMap<>();
 
 		// build new folder/files hierarchy
 		final AtomicReference<Path> currentDestination = new AtomicReference<>();
-		files
+		filenamesPath
 			.values()
 			.stream()
 			.forEach(f -> {
@@ -129,13 +159,42 @@ public class FolderOrganiser {
 			.parallel()
 			.forEach(e -> {
 				fileTools.moveFile(e.getKey(), e.getValue());
-				files.put(e.getValue().getFileName().toString(), e.getValue());
+				// update path in filenamesPath to keep in sync
+				filenamesPath.put(e.getValue().getFileName().toString(), e.getValue());
+			});
+
+		// handle duplicates
+		if (!duplicates.isEmpty() && !Files.exists(duplicateFolder)) {
+			fileTools.createFolder(duplicateFolder);
+		}
+		duplicates
+			.forEach(p -> {
+				final Path destination = getDuplicateDestination(p);
+				fileTools.moveFile(p, destination);
+				// add path in filenamesPath to keep in sync
+				filenamesPath.put(destination.getFileName().toString(), destination);
 			});
 
 		return this;
 	}
 
-	private Path getDestination(Path file, int maxNameLength) {
+	private Path getDuplicateDestination(Path duplicate) {
+		if (duplicate.getParent().equals(duplicateFolder)) {
+			return duplicate;
+		}
+
+		// build destination path for a duplicated filename
+		return Paths.get(duplicateFolder.toString(), new StringBuilder()
+				.append(UUID
+						.randomUUID()
+						.toString())
+				.append(duplicate
+						.toString()
+						.replaceAll("[\\\\,/]", "_"))
+				.toString());
+	}
+
+	private Path getDestination(Path file, int maxNameLength) { //TODO create class PathBuilder
 		// build destination path from filename
 		final String fileName = file.getFileName().toString();
 		final String folderName = fileName.substring(0, Math.min(fileName.length(), maxNameLength));
