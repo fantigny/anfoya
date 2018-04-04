@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 public class FolderOrganiser {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FolderOrganiser.class);
-	private static final String DUPLICATE = "__DUPLICATE__";
 	private static final Comparator<String> FILENAME_COMPARATOR = new Comparator<String>() { // allows special characters to be sorted first
 		@Override public int compare(String filename1, String filename2) {
 			final char c1 = filename1.charAt(0), c2 = filename2.charAt(0);
@@ -39,17 +37,11 @@ public class FolderOrganiser {
 	private final FileTools fileTools;
 	private final Map<String, Path> filenamesPath;
 
-	private final Path duplicateFolder;
-	private final Set<Path> duplicates;
-
 	public FolderOrganiser(Path path) {
 		this.path = path;
 
 		fileTools = new FileTools();
 		filenamesPath = new ConcurrentSkipListMap<>(FILENAME_COMPARATOR);
-
-		duplicateFolder = Paths.get(path.toString(), DUPLICATE);
-		duplicates = new HashSet<>();
 	}
 
 	public FolderOrganiser dry(boolean dry) {
@@ -79,9 +71,9 @@ public class FolderOrganiser {
 		// add new files (and count folders)
 		final AtomicInteger folderCount = new AtomicInteger(-1);
 		try (final Stream<Path> stream = Files.walk(path)) {
+			final Set<Path> duplicates = new HashSet<>();
 			filenamesPath.putAll(stream
 					.peek(p -> folderCount.addAndGet(Files.isDirectory(p)? 1: 0))
-					.filter(p -> !p.getParent().equals(duplicateFolder))
 					.filter(p -> !Files.isDirectory(p))
 					.collect(Collectors.toMap(
 							p -> p.getFileName().toString()
@@ -90,6 +82,9 @@ public class FolderOrganiser {
 								duplicates.add(p2);
 								return p1;
 							})));
+			filenamesPath.putAll(duplicates
+					.stream()
+					.collect(Collectors.toMap(p -> getDuplicateFilename(p), p -> p)));
 		}
 
 		LOGGER.info("found {} files in {} folders", filenamesPath.size(), folderCount.get());
@@ -99,11 +94,18 @@ public class FolderOrganiser {
 
 	public FolderOrganiser cleanUp() throws IOException {
 		try (final Stream<Path> stream = Files.walk(path)) {
-			// delete empty folders
 			stream
-				.filter(p -> fileTools.isEmpty(p))
 				.parallel()
-				.forEach(p -> fileTools.delete(p));
+				.forEach(p -> {
+					if (fileTools.isEmpty(p)
+							|| p.getFileName().toString().startsWith("._")
+							|| p.getFileName().toString().equals(".DS_Store")) {
+						fileTools.delete(p);
+						// update path in filenamesPath to keep in sync
+						final String filename = p.getFileName().toString();
+						filenamesPath.remove(filename);
+					}
+				});
 		}
 
 		return this;
@@ -147,56 +149,60 @@ public class FolderOrganiser {
 			.forEach(f -> fileTools.createFolder(f));
 
 		// move files
+		final Set<String> filenames = new HashSet<>();
 		folderFiles
 			.entrySet()
 			.stream()
-			.flatMap(e -> e.getValue()
+			.flatMap(e -> {
+				final String folderName = e.getKey().toString();
+				return e.getValue()
 					.stream()
-					.map(f -> new AbstractMap.SimpleEntry<>(
-							/* source */ f,
-							/* target */ Paths.get(e.getKey().toString(), f.getFileName().toString()))))
-			.filter(e -> !Files.exists(e.getValue()))
+					.map(f -> {
+						final Path source = f;
+						String filename = source.getFileName().toString();
+						if (filenames.contains(filename)) {
+							filename = getDuplicateFilename(source);
+						}
+						filenames.add(filename);
+
+						return new AbstractMap.SimpleEntry<>(source, Paths.get(folderName, filename));
+					});
+			})
+			.filter(e -> !e.getKey().equals(e.getValue()))
 			.parallel()
 			.forEach(e -> {
-				fileTools.moveFile(e.getKey(), e.getValue());
-				// update path in filenamesPath to keep in sync
-				filenamesPath.put(e.getValue().getFileName().toString(), e.getValue());
-			});
+				final Path source = e.getKey(), target = e.getValue();
+				fileTools.moveFile(source, target);
 
-		// handle duplicates
-		if (!duplicates.isEmpty() && !Files.exists(duplicateFolder)) {
-			fileTools.createFolder(duplicateFolder);
-		}
-		duplicates
-			.forEach(p -> {
-				final Path destination = getDuplicateDestination(p);
-				fileTools.moveFile(p, destination);
-				// add path in filenamesPath to keep in sync
-				filenamesPath.put(destination.getFileName().toString(), destination);
+				// update path in filenamesPath to keep in sync
+				final String filename = target.getFileName().toString();
+				filenamesPath.remove(filename);
+				filenamesPath.put(filename, target);
 			});
 
 		return this;
 	}
 
-	private Path getDuplicateDestination(Path duplicate) {
-		if (duplicate.getParent().equals(duplicateFolder)) {
-			return duplicate;
-		}
-
-		// build destination path for a duplicated filename
-		return Paths.get(duplicateFolder.toString(), new StringBuilder()
-				.append(UUID
-						.randomUUID()
-						.toString())
-				.append(duplicate
-						.toString()
-						.replaceAll("[\\\\,/]", "_"))
-				.toString());
+	private String getDuplicateFilename(Path duplicate) {
+		// build filename for a duplicated path
+		final String filename = duplicate.getFileName().toString();
+		final String extension = filename.substring(filename.lastIndexOf(".")+1);
+		return new StringBuilder()
+				.append(filename)
+				.append(" (from ")
+				.append(duplicate.getParent().getFileName().toString())
+				.append(")")
+				.append(extension.isEmpty()? "": ".")
+				.append(extension)
+				.toString();
 	}
 
 	private Path getDestination(Path file, int maxNameLength) { //TODO create class PathBuilder
 		// build destination path from filename
-		final String fileName = file.getFileName().toString();
+		 String fileName = file.getFileName().toString();
+		 if (fileName.contains(" from ")) {
+			 fileName = fileName.substring(0, fileName.indexOf(" from "));
+		 }
 		final String folderName = fileName.substring(0, Math.min(fileName.length(), maxNameLength));
 		return Paths.get(path.toString(), folderName);
 	}
