@@ -18,26 +18,26 @@ public class FileTools {
 		this.dry = dry;
 	}
 
-	public void createFolder(Path folder) {
+	public void createFolder(Path folder) throws IOException {
 		LOGGER.info("create {}", folder);
-		if (!dry) {
-			try {
-				Files.createDirectory(folder);
-			} catch (final IOException ex) {
-				LOGGER.error("create folder {}", folder, ex);
-			}
+
+		if (dry) {
+			LOGGER.warn("<< dry >>");
+			return;
 		}
+
+		Files.createDirectory(folder);
 	}
 
-	public void moveFile(Path source, Path target) 		{
+	public void moveFile(Path source, Path target) throws IOException 		{
 		LOGGER.info("move {} to {}", source.getFileName(), target.getParent());
-		if (!dry) {
-			try {
-				Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-			} catch (final IOException ex) {
-				LOGGER.error("move file from {} to {}", source, target, ex);
-			}
+
+		if (dry) {
+			LOGGER.warn("<< dry >>");
+			return;
 		}
+
+		Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	public boolean isEmpty(Path folder) {
@@ -48,16 +48,15 @@ public class FileTools {
 		}
 	}
 
-	public void delete(Path file) {
+	public void delete(Path file) throws IOException {
 		LOGGER.info("delete {}", file);
-		if (!dry) {
-			try {
-				Files.delete(file);
-			} catch (final IOException e) {
-				LOGGER.error("delete empty folder {}", file, e);
-			}
-		}
-	}
 
+		if (dry) {
+			LOGGER.warn("<< dry >>");
+			return;
+		}
+
+		Files.delete(file);
+	}
 
 }

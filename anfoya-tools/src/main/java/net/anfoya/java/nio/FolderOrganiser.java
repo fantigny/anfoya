@@ -1,5 +1,6 @@
 package net.anfoya.java.nio;
 
+import java.awt.Desktop;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,6 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -22,11 +24,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FolderOrganiser {
-	protected static final int FILE_COUNT = 20;
-	protected static final int MAX_FILE_NAME_LENGTH = 4;
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(FolderOrganiser.class);
-	private static final Comparator<String> FILENAME_COMPARATOR = new Comparator<String>() { // allows special characters to be sorted first
+
+	protected static final int DEFAULT_FILE_COUNT = 20;
+	protected static final int DEFAULT_MAX_FILE_NAME_LENGTH = 4;
+
+	// allows special characters to be sorted first
+	private static final Comparator<String> FILENAME_COMPARATOR = new Comparator<String>() {
 		@Override public int compare(String filename1, String filename2) {
 			final char c1 = filename1.charAt(0), c2 = filename2.charAt(0);
 			return Character.isLetterOrDigit(c1) && !Character.isLetterOrDigit(c2)? 1
@@ -55,10 +59,6 @@ public class FolderOrganiser {
 
 	public Set<String> getFilenames() {
 		return Collections.unmodifiableSet(filenamesPath.keySet());
-	}
-
-	public Path getPath(String filename) {
-		return filenamesPath.get(filename);
 	}
 
 	public boolean exists(String filename) {
@@ -95,7 +95,9 @@ public class FolderOrganiser {
 		return this;
 	}
 
-	public FolderOrganiser cleanUp() throws IOException {
+	public Set<Exception> cleanUp() throws IOException {
+		final Set<Exception> exceptions = new CopyOnWriteArraySet<>();
+
 		try (final Stream<Path> stream = Files.walk(path)) {
 			stream
 				.parallel()
@@ -103,7 +105,10 @@ public class FolderOrganiser {
 					if (fileTools.isEmpty(p)
 							|| p.getFileName().toString().startsWith("._")
 							|| p.getFileName().toString().equals(".DS_Store")) {
-						fileTools.delete(p);
+
+						try { fileTools.delete(p); }
+						catch (final IOException e) { exceptions.add(e); }
+
 						// update path in filenamesPath to keep in sync
 						final String filename = p.getFileName().toString();
 						filenamesPath.remove(filename);
@@ -111,10 +116,10 @@ public class FolderOrganiser {
 				});
 		}
 
-		return this;
+		return exceptions;
 	}
 
-	public void rename(String filename, String newFilename) throws FileNotFoundException {
+	public void rename(String filename, String newFilename) throws IOException {
 		if (!filenamesPath.containsKey(filename)) {
 			throw new FileNotFoundException(filename);
 		}
@@ -125,11 +130,12 @@ public class FolderOrganiser {
 		fileTools.moveFile(source, target);
 	}
 
-	public FolderOrganiser organise() {
-		return organise(FILE_COUNT, MAX_FILE_NAME_LENGTH);
+	public Set<Exception> organise() {
+		return organise(DEFAULT_FILE_COUNT, DEFAULT_MAX_FILE_NAME_LENGTH);
 	}
 
-	public FolderOrganiser organise(int fileCount, int maxNameLength) {
+	public Set<Exception> organise(int fileCount, int maxNameLength) {
+		final Set<Exception> exceptions = new CopyOnWriteArraySet<>();
 		final Map<Path, Set<Path>> folderFiles = new HashMap<>();
 
 		// build new folder/files hierarchy
@@ -152,8 +158,11 @@ public class FolderOrganiser {
 		folderFiles
 			.keySet()
 			.parallelStream()
-			.filter(f -> !Files.exists(f))
-			.forEach(f -> fileTools.createFolder(f));
+			.filter(p -> !Files.exists(p))
+			.forEach(p -> {
+				try { fileTools.createFolder(p); }
+				catch (final IOException e) { exceptions.add(e); }
+			});
 
 		// move files
 		final Set<String> filenames = new HashSet<>();
@@ -176,7 +185,9 @@ public class FolderOrganiser {
 			.parallel()
 			.forEach(e -> {
 				final Path source = e.getKey(), target = e.getValue();
-				fileTools.moveFile(source, target);
+
+				try { fileTools.moveFile(source, target); }
+				catch (final IOException ex) { exceptions.add(ex); }
 
 				// update path in filenamesPath to keep in sync
 				final String filename = target.getFileName().toString();
@@ -184,7 +195,11 @@ public class FolderOrganiser {
 				filenamesPath.put(filename, target);
 			});
 
-		return this;
+		return exceptions;
+	}
+
+	protected Path getPath(String filename) {
+		return filenamesPath.get(filename);
 	}
 
 	private String getDuplicateFilename(Path duplicate) {
@@ -209,5 +224,31 @@ public class FolderOrganiser {
 		 }
 		final String folderName = fileName.substring(0, Math.min(fileName.length(), maxNameLength));
 		return Paths.get(path.toString(), folderName);
+	}
+
+	public Set<Exception> open(Set<String> filenames) {
+		final Set<Exception> exceptions = new CopyOnWriteArraySet<>();
+
+		filenames
+				.parallelStream()
+				.forEach(f -> {
+					try { Desktop.getDesktop().open(getPath(f).toFile()); }
+					catch (final IOException ex) { exceptions .add(ex); }
+				});
+
+		return exceptions;
+	}
+
+	public Set<Exception> delete(Set<String> filenames) {
+		final Set<Exception> exceptions = new CopyOnWriteArraySet<>();
+
+		filenames
+				.parallelStream()
+				.forEach(f -> {
+					try { fileTools.delete(getPath(f)); }
+					catch (final IOException ex) { exceptions .add(ex); }
+				});
+
+		return exceptions;
 	}
 }
