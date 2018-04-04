@@ -22,6 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FolderOrganiser {
+	protected static final int FILE_COUNT = 20;
+	protected static final int MAX_FILE_NAME_LENGTH = 4;
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(FolderOrganiser.class);
 	private static final Comparator<String> FILENAME_COMPARATOR = new Comparator<String>() { // allows special characters to be sorted first
 		@Override public int compare(String filename1, String filename2) {
@@ -120,6 +123,10 @@ public class FolderOrganiser {
 		final Path target = Paths.get(source.getParent().toString(), newFilename);
 
 		fileTools.moveFile(source, target);
+	}
+
+	public FolderOrganiser organise() {
+		return organise(FILE_COUNT, MAX_FILE_NAME_LENGTH);
 	}
 
 	public FolderOrganiser organise(int fileCount, int maxNameLength) {
