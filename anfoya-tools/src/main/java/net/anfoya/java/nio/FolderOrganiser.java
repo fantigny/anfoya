@@ -156,6 +156,7 @@ public class FolderOrganiser {
 			.flatMap(e -> e.getValue()
 					.stream()
 					.map(f -> {
+						// handle duplicate filenames
 						String filename = f.getFileName().toString();
 						if (filenames.contains(filename)) {
 							filename = getDuplicateFilename(f);
