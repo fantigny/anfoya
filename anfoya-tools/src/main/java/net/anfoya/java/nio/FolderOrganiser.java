@@ -153,21 +153,17 @@ public class FolderOrganiser {
 		folderFiles
 			.entrySet()
 			.stream()
-			.flatMap(e -> {
-				final String folderName = e.getKey().toString();
-				return e.getValue()
+			.flatMap(e -> e.getValue()
 					.stream()
 					.map(f -> {
-						final Path source = f;
-						String filename = source.getFileName().toString();
+						String filename = f.getFileName().toString();
 						if (filenames.contains(filename)) {
-							filename = getDuplicateFilename(source);
+							filename = getDuplicateFilename(f);
 						}
 						filenames.add(filename);
 
-						return new AbstractMap.SimpleEntry<>(source, Paths.get(folderName, filename));
-					});
-			})
+						return new AbstractMap.SimpleEntry<>(f, Paths.get(e.getKey().toString(), filename));
+					}))
 			.filter(e -> !e.getKey().equals(e.getValue()))
 			.parallel()
 			.forEach(e -> {
