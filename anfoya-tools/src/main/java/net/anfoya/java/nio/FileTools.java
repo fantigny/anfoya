@@ -29,7 +29,7 @@ public class FileTools {
 		Files.createDirectory(folder);
 	}
 
-	public void moveFile(Path source, Path target) throws IOException 		{
+	public void move(Path source, Path target) throws IOException 		{
 		LOGGER.info("move {} to {}", source.getFileName(), target.getParent());
 
 		if (dry) {

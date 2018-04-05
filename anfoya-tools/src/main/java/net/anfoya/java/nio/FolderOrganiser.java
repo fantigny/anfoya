@@ -51,7 +51,7 @@ public class FolderOrganiser {
 		filenamesPath = new ConcurrentSkipListMap<>(FILENAME_COMPARATOR);
 	}
 
-	public FolderOrganiser dry(boolean dry) {
+	public FolderOrganiser setDry(boolean dry) {
 		fileTools.setDry(dry);
 
 		return this;
@@ -127,7 +127,7 @@ public class FolderOrganiser {
 		final Path source = filenamesPath.get(filename);
 		final Path target = Paths.get(source.getParent().toString(), newFilename);
 
-		fileTools.moveFile(source, target);
+		fileTools.move(source, target);
 	}
 
 	public Set<Exception> organise() {
@@ -186,7 +186,7 @@ public class FolderOrganiser {
 			.forEach(e -> {
 				final Path source = e.getKey(), target = e.getValue();
 
-				try { fileTools.moveFile(source, target); }
+				try { fileTools.move(source, target); }
 				catch (final IOException ex) { exceptions.add(ex); }
 
 				// update path in filenamesPath to keep in sync
