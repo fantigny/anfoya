@@ -45,17 +45,19 @@ public class FixedSplitPane extends HBox {
 	private Pane resizable;
 	private double dividerWidth;
 
-	public FixedSplitPane() {
+	public FixedSplitPane(Pane... panes) {
 		getStyleClass().add("fixed-split-pane");
 		widthProperty().addListener((ov, o, n) -> refreshWidths());
 
-		panes = FXCollections.observableArrayList();
-		panes.addListener((Change<? extends Pane> c) -> updateChildren());
+		this.panes = FXCollections.observableArrayList();
+		this.panes.addListener((Change<? extends Pane> c) -> updateChildren());
 
-		paneWidths = new HashMap<Pane, Double>();
+		paneWidths = new HashMap<>();
 
 		dividerWidth = 0;
 		resizable = null;
+
+		getPanes().addAll(panes);
 	}
 
 	private void updateChildren() {
@@ -164,7 +166,7 @@ public class FixedSplitPane extends HBox {
 	}
 
 	public void setVisiblePanes(Pane... panes) {
-		final List<Pane> hidden = new ArrayList<Pane>(getPanes());
+		final List<Pane> hidden = new ArrayList<>(getPanes());
 		Arrays.stream(panes).forEach(p -> {
 			p.setVisible(true);
 			hidden.remove(p);
