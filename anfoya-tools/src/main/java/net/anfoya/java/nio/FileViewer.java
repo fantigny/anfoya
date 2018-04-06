@@ -4,6 +4,8 @@ import java.nio.file.Path;
 
 public interface FileViewer {
 
-	void open(Path path);
+	public void init();
+	public void open(Path path);
+	public void close();
 
 }
