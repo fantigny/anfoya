@@ -8,11 +8,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
-import net.anfoya.java.nio.FolderOrganiser;
-
 public class FolderOrganiserTest {
+
+	@Ignore @Test public void organiseMovies() throws IOException {
+		new FolderOrganiser(Paths.get("/Volumes/movies/dl")).setDry(true).reload().organise(10000, -1);
+	}
 
 	@Test public void test_3_4() throws IOException {
 
