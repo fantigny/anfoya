@@ -252,7 +252,7 @@ public class FolderOrganiser {
 		return exceptions;
 	}
 
-	public void open(FileViewer viewer, String filename) {
+	public void open(FileViewer viewer, String filename) throws Exception {
 		viewer.open(getPath(filename));
 	}
 }

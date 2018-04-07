@@ -5,7 +5,7 @@ import java.nio.file.Path;
 public interface FileViewer {
 
 	public void init();
-	public void open(Path path);
+	public void open(Path path) throws Exception;
 	public void close();
 
 }
