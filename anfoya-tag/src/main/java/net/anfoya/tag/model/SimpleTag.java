@@ -11,7 +11,6 @@ public class SimpleTag implements Tag, Comparable<SimpleTag> {
 	private final String name;
 	private final String path;
 	private final boolean system;
-	private final int hash;
 
 	public SimpleTag() {
 		this(NOT_DEFINED, NOT_DEFINED, NOT_DEFINED, false);
@@ -21,7 +20,6 @@ public class SimpleTag implements Tag, Comparable<SimpleTag> {
 		this.name = name;
 		this.path = path;
 		this.system = system;
-		this.hash = id.hashCode();
 	}
 
     @Override
@@ -31,7 +29,7 @@ public class SimpleTag implements Tag, Comparable<SimpleTag> {
 
 	@Override
 	public int hashCode() {
-	    return hash;
+	    return id.hashCode();
 	}
 
     @Override
