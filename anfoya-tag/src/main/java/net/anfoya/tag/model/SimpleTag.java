@@ -5,6 +5,7 @@ import net.anfoya.tag.service.Tag;
 
 @SuppressWarnings("serial")
 public class SimpleTag implements Tag, Comparable<SimpleTag> {
+	private static final String NOT_DEFINED = "n/d";
 
 	private final String id;
 	private final String name;
@@ -13,10 +14,10 @@ public class SimpleTag implements Tag, Comparable<SimpleTag> {
 	private final int hash;
 
 	public SimpleTag() {
-		this("n/d", "n/d", "n/d", false);
+		this(NOT_DEFINED, NOT_DEFINED, NOT_DEFINED, false);
 	}
 	public SimpleTag(final String id, final String name, final String path, final boolean system) {
-		this.id = id;
+		this.id = id == null? NOT_DEFINED: id;
 		this.name = name;
 		this.path = path;
 		this.system = system;
