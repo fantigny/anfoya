@@ -6,6 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -25,7 +26,9 @@ public class ResetTextField extends StackPane {
 		getChildren().addAll(delegate, resetButton);
 		setAlignment(Pos.CENTER_RIGHT);
 		setMargin(resetButton, new Insets(0, 5, 0, 0));
+		prefWidthProperty().set(100);
 
+		delegate.setPrefWidth(100);
 		delegate.prefWidthProperty().bind(widthProperty());
 		delegate.textProperty().addListener((ov, oldVal, newVal) -> {
 			if (newVal.isEmpty()) {
@@ -88,5 +91,9 @@ public class ResetTextField extends StackPane {
 
 	public String getText() {
 		return delegate.getText();
+	}
+
+	public void setTextFormatter(TextFormatter<String> formatter) {
+		delegate.setTextFormatter(formatter);
 	}
 }
