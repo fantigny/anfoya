@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 public class FolderOrganiser {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FolderOrganiser.class);
 
-	protected static final int DEFAULT_FILE_COUNT = 20;
 	protected static final int DEFAULT_MAX_FILE_NAME_LENGTH = 4;
 
 	// allows special characters to be sorted first
@@ -130,8 +129,8 @@ public class FolderOrganiser {
 		fileTools.move(source, target);
 	}
 
-	public Set<Exception> organise() {
-		return organise(DEFAULT_FILE_COUNT, DEFAULT_MAX_FILE_NAME_LENGTH);
+	public Set<Exception> organise(int filePerFolder) {
+		return organise(filePerFolder, DEFAULT_MAX_FILE_NAME_LENGTH);
 	}
 
 	public Set<Exception> organise(int fileCount, int maxNameLength) {
