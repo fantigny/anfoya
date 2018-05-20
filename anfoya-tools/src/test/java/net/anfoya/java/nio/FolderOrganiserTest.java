@@ -206,7 +206,7 @@ public class FolderOrganiserTest {
 		assertEquals(Paths.get("src/test/resources/testFiles/test/testAB1.txt"), organiser.getPath("testAB1.txt"));
 	}
 
-	@Test public void testCleanUp() throws IOException {
+	@Test public void testCleanUpFolders() throws IOException {
 		final FolderOrganiser organiser = new FolderOrganiser(Paths.get("src/test/resources/testFiles"))
 			.reload();
 
@@ -218,7 +218,7 @@ public class FolderOrganiserTest {
 		assertTrue(Files.exists(Paths.get("src/test/resources/testFiles/[tes")));
 		assertTrue(Files.exists(Paths.get("src/test/resources/testFiles/test")));
 
-		organiser.cleanUp();
+		organiser.cleanUpFolders();
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[tes")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test")));
 	}

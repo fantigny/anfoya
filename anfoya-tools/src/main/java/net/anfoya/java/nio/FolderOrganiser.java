@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -94,17 +95,31 @@ public class FolderOrganiser {
 		return this;
 	}
 
-	public Set<Exception> cleanUp() throws IOException {
+	public Set<Exception> cleanUpFolders() throws IOException {
 		final Set<Exception> exceptions = new CopyOnWriteArraySet<>();
 
 		try (final Stream<Path> stream = Files.walk(path)) {
 			stream
 				.parallel()
 				.forEach(p -> {
-					if (fileTools.isEmpty(p)
-							|| p.getFileName().toString().startsWith("._")
-							|| p.getFileName().toString().equals(".DS_Store")) {
+					if (fileTools.isEmpty(p)) {
+						try { fileTools.delete(p); }
+						catch (final IOException e) { exceptions.add(e); }
+					}
+				});
+		}
 
+		return exceptions;
+	}
+
+	public Set<Exception> cleanUpFiles() throws IOException {
+		final Set<Exception> exceptions = new CopyOnWriteArraySet<>();
+
+		try (final Stream<Path> stream = Files.walk(path)) {
+			stream
+				.parallel()
+				.forEach(p -> {
+					if (cleanUpFile(p.getFileName().toString())) {
 						try { fileTools.delete(p); }
 						catch (final IOException e) { exceptions.add(e); }
 
@@ -116,6 +131,22 @@ public class FolderOrganiser {
 		}
 
 		return exceptions;
+	}
+
+	private boolean cleanUpFile(String fileName) {
+		return Arrays
+				.stream(new String[] { ">._", "=.DS_Store", "<.nfo", "<.txt", "<.jpg", "<.png" })
+				.map(s -> {
+					final String lowerFileName = fileName.toLowerCase(), lowerSearch = s.substring(1).toLowerCase();
+					switch (s.charAt(0)) {
+					case '=':	return lowerFileName.equals(lowerSearch);
+					case '>':	return lowerFileName.startsWith(lowerSearch);
+					case '<':	return lowerFileName.endsWith(lowerSearch);
+					case '*':	return lowerFileName.contains(lowerSearch);
+					default:	return false;
+					}
+				})
+				.reduce(false, (a, b) -> a || b);
 	}
 
 	public void rename(String filename, String newFilename) throws IOException {
