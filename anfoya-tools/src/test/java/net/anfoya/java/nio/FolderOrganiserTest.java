@@ -8,9 +8,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class FolderOrganiserTest {
 
 	@Ignore @Test public void organiseMovies() throws IOException {
@@ -44,10 +47,6 @@ public class FolderOrganiserTest {
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[test/[test2.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[test/[test3.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[tes1/test.1A.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test./test.A1.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test./test1.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test./test2.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test./test3.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test4/test4.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test4/test5.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test4/testA1.txt")));
@@ -84,10 +83,6 @@ public class FolderOrganiserTest {
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[tes/[test2.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[tes/[test3.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test.1A.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test.A1.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test1.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test2.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test3.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test4.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test5.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/testA1.txt")));
@@ -125,10 +120,6 @@ public class FolderOrganiserTest {
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[tes/[test2.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[tes/[test3.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test.1A.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test.A1.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test1.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test2.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test3.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test4.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test5.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/testA1.txt")));
@@ -161,10 +152,6 @@ public class FolderOrganiserTest {
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[tes/[test2.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/[tes/[test3.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test.1A.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test.A1.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test1.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test2.txt")));
-		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test3.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test4.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/test5.txt")));
 		assertFalse(Files.exists(Paths.get("src/test/resources/testFiles/test/testA1.txt")));
@@ -206,7 +193,7 @@ public class FolderOrganiserTest {
 		assertEquals(Paths.get("src/test/resources/testFiles/test/testAB1.txt"), organiser.getPath("testAB1.txt"));
 	}
 
-	@Test public void testCleanUpFolders() throws IOException {
+	@Test public void zzTestCleanUpFolders() throws IOException {
 		final FolderOrganiser organiser = new FolderOrganiser(Paths.get("src/test/resources/testFiles"))
 			.reload();
 
