@@ -23,19 +23,21 @@ public class SelectedTagsPane<T extends Tag> extends FlowPane {
 	}
 
 	public void refresh(final Set<T> tags) {
-		final Set<Label> labels = new LinkedHashSet<Label>();
-		final Set<T> sortedTags = new TreeSet<T>(tags);
-		for(final T tag: sortedTags) {
-			if (tag.isSystem()) {
-				labels.add(createLabel(tag));
+		final Set<Label> labels = new LinkedHashSet<>();
+		final Set<T> sortedTags = new TreeSet<>(tags);
+		// add system label first
+		sortedTags.forEach(t -> {
+			if (t.isSystem()) {
+				labels.add(createLabel(t));
 			}
-		}
+		});
+		// then others
+		sortedTags.forEach(t -> {
+			if (!t.isSystem()) {
+				labels.add(createLabel(t));
+			}
+		});
 
-		for(final T tag: sortedTags) {
-			if (!tag.isSystem()) {
-				labels.add(createLabel(tag));
-			}
-		}
 		getChildren().setAll(labels);
 	}
 
