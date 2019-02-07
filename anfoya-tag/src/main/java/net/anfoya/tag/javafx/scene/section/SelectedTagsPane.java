@@ -1,8 +1,8 @@
 package net.anfoya.tag.javafx.scene.section;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -23,22 +23,19 @@ public class SelectedTagsPane<T extends Tag> extends FlowPane {
 	}
 
 	public void refresh(final Set<T> tags) {
-		final Set<Label> labels = new LinkedHashSet<>();
-		final Set<T> sortedTags = new TreeSet<>(tags);
-		// add system label first
-		sortedTags.forEach(t -> {
-			if (t.isSystem()) {
-				labels.add(createLabel(t));
-			}
-		});
-		// then others
-		sortedTags.forEach(t -> {
-			if (!t.isSystem()) {
-				labels.add(createLabel(t));
-			}
-		});
-
-		getChildren().setAll(labels);
+		// sort tags in alphabetical order with system tags first
+		getChildren().setAll(Stream.concat(
+				tags
+					.stream()
+					.filter(t -> t.isSystem())
+					.sorted()
+					.map(t -> createLabel(t)),
+				tags
+					.stream()
+					.filter(t -> !t.isSystem())
+					.sorted()
+					.map(t -> createLabel(t)))
+				.collect(Collectors.toList()));
 	}
 
 	private Label createLabel(final T tag) {
