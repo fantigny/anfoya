@@ -21,7 +21,7 @@ public class ShutdownHook {
 			try {
 				callable.call();
 			} catch (Exception e) {
-				LOGGER.error("shutdown hook execution failed", e);
+				LOGGER.error("shutdown hook execution failed for {}", className, e);
 				return;
 			}
 
