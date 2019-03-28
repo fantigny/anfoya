@@ -16,8 +16,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.anfoya.java.io.SerializedFile;
+import net.anfoya.java.util.system.ShutdownHook;
 
-public class FileSerieSerializedMap<K extends Serializable, V extends Serializable> implements Map<K, V>{
+public class FileSerieSerializedMap<K extends Serializable, V extends Serializable> implements Map<K, V> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileSerieSerializedMap.class);
 
 	private final int threshold;
@@ -52,7 +53,7 @@ public class FileSerieSerializedMap<K extends Serializable, V extends Serializab
 
 		saving = false;
 
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> save()));
+		new ShutdownHook(() -> save());
 	}
 
 	private synchronized void save() {

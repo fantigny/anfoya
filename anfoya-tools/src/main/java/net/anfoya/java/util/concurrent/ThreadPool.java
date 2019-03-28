@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.anfoya.java.util.VoidCallback;
+import net.anfoya.java.util.system.ShutdownHook;
 
 public class ThreadPool {
 	public enum PoolPriority { MIN, REG, MAX, MUST_RUN };
@@ -43,19 +44,19 @@ public class ThreadPool {
 		priorityPools.put(PoolPriority.REG, reg);
 		priorityPools.put(PoolPriority.MAX, max);
 		priorityPools.put(PoolPriority.MUST_RUN, ObservableExecutors.newCachedThreadPool("must-run", Thread.NORM_PRIORITY));
+		
+		new ShutdownHook(() -> waitForMustRun(), false);
+	}
 
-		final Thread waitForMustRun = new Thread(() -> {
-			final ObservableExecutorService mustRun = priorityPools.get(PoolPriority.MUST_RUN);
-			while(mustRun.isRunning()) {
-				try {
-					Thread.sleep(250);
-				} catch (final Exception e) {
-					LOGGER.error("interrupted while running mandatory process", e);
-				}
+	private void waitForMustRun() {
+		final ObservableExecutorService mustRun = priorityPools.get(PoolPriority.MUST_RUN);
+		while(mustRun.isRunning()) {
+			try {
+				Thread.sleep(250);
+			} catch (final Exception e) {
+				LOGGER.error("interrupted while running mandatory process", e);
 			}
-		});
-		waitForMustRun.setDaemon(false);
-		Runtime.getRuntime().addShutdownHook(waitForMustRun);
+		}
 	}
 
 	public void submit(final PoolPriority priority, final String description, final Runnable runnable) {

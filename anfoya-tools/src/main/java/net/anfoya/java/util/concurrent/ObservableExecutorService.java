@@ -35,16 +35,6 @@ public final class ObservableExecutorService {
 			new TimerTask() { @Override public void run() { cleanupFutures(); } }
 			, CLEANUP_PERIOD_MS, CLEANUP_PERIOD_MS);
 
-//		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-//			if (!service.isShutdown()) {
-//				service.shutdown();
-//				LOGGER.info("shutdown {}", service);
-//			} else if (!service.isTerminated()) {
-//				service.shutdownNow();
-//				LOGGER.info("shutdown now {}", service);
-//			}
-//		}));
-
 		LOGGER.info("created thread pool {}", name);
 	}
 
