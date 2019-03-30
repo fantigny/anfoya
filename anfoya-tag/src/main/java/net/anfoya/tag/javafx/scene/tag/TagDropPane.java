@@ -9,8 +9,6 @@ import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -34,7 +32,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 	private final UndoService undoService;
 	private final DndPaneTranslationHelper transHelper;
 
-	private EventHandler<ActionEvent> updateHandler;
+	private Runnable updateCallback;
 
 	private final BooleanProperty systemProperty;
 
@@ -126,7 +124,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 				return null;
 			}
 		};
-		task.setOnSucceeded(event -> updateHandler.handle(null));
+		task.setOnSucceeded(event -> updateCallback.run());
 		task.setOnFailed(e -> LOGGER.error("move label {} to section {}", tag.getName(), finalAnswer, e.getSource().getException()));
 		ThreadPool.getDefault().submit(PoolPriority.MAX, "move label " + tag.getName() + " to section " + finalAnswer, task);
 
@@ -169,7 +167,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 			undoService.setUndo(
 					() -> tagService.rename(tag, tag.getName())
 					, "rename " + tag.getName());
-			updateHandler.handle(null);
+			updateCallback.run();
 		});
 		task.setOnFailed(e -> LOGGER.error("rename {} to {}", tag.getName(), finalAnswer, e.getSource().getException()));
 		ThreadPool.getDefault().submit(PoolPriority.MAX, "rename " + tag.getName() + " to " + finalAnswer, task);
@@ -194,7 +192,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 						return null;
 					}
 				};
-				task.setOnSucceeded(event -> updateHandler.handle(null));
+				task.setOnSucceeded(event -> updateCallback.run());
 				task.setOnFailed(e -> LOGGER.error("remove {}", tag.getName(), e.getSource().getException()));
 				ThreadPool.getDefault().submit(PoolPriority.MAX, "remove " + tag.getName(), task);
 			});
@@ -217,7 +215,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 			undoService.setUndo(
 					() -> tagService.show(tag)
 					, description);
-			updateHandler.handle(null);
+			updateCallback.run();
 		});
 		task.setOnFailed(e -> LOGGER.error(description, e.getSource().getException()));
 		ThreadPool.getDefault().submit(PoolPriority.MAX, description, task);
@@ -225,7 +223,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 		return null;
 	}
 
-	public void setOnUpdate(final EventHandler<ActionEvent> handler) {
-		updateHandler = handler;
+	public void setOnUpdate(final Runnable callback) {
+		updateCallback = callback;
 	}
 }

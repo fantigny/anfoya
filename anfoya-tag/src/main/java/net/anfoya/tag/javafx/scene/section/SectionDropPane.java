@@ -6,8 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -28,7 +26,7 @@ public class SectionDropPane<S extends Section> extends GridPane {
 	private final TagService<S, ? extends Tag> tagService;
 	private final UndoService undoService;
 
-	private EventHandler<ActionEvent> updateHandler;
+	private Runnable updateCallback;
 
 	public SectionDropPane(final TagService<S, ? extends Tag> tagService, UndoService undoService) {
 		getStyleClass().add("droparea-grid");
@@ -59,8 +57,8 @@ public class SectionDropPane<S extends Section> extends GridPane {
 		setMaxHeight(65 * row);
 	}
 
-	public void setOnUpdateSection(final EventHandler<ActionEvent> handler) {
-		updateHandler = handler;
+	public void setOnUpdateSection(final Runnable callback) {
+		updateCallback = callback;
 	}
 
 	private Void rename(final S section) {
@@ -95,7 +93,7 @@ public class SectionDropPane<S extends Section> extends GridPane {
 		};
 		task.setOnSucceeded(event -> {
 			undoService.setUndo(() -> tagService.rename(task.get(), section.getName()), "rename " + section.getName());
-			updateHandler.handle(null);
+			updateCallback.run();
 		});
 		task.setOnFailed(e -> LOGGER.error(description, e.getSource().getException()));
 		ThreadPool.getDefault().submit(PoolPriority.MAX, description, task);
@@ -118,7 +116,7 @@ public class SectionDropPane<S extends Section> extends GridPane {
 						return null;
 					}
 				};
-				task.setOnSucceeded(event -> updateHandler.handle(null));
+				task.setOnSucceeded(event -> updateCallback.run());
 				task.setOnFailed(e -> LOGGER.error("remove section {}", section.getName(), e.getSource().getException()));
 				ThreadPool.getDefault().submit(PoolPriority.MAX, "remove section " + section.getName(), task);
 			});
@@ -139,7 +137,7 @@ public class SectionDropPane<S extends Section> extends GridPane {
 			undoService.setUndo(
 					() -> tagService.show(section)
 					, description);
-			updateHandler.handle(null);
+			updateCallback.run();
 		});
 		task.setOnFailed(e -> LOGGER.error(description, e.getSource().getException()));
 		ThreadPool.getDefault().submit(PoolPriority.MAX, description, task);

@@ -13,8 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.TitledPane;
@@ -42,13 +40,13 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 	private final TagService<S, T> tagService;
 
 	private final ResetTextField patternField;
-	private final Accordion sectionAcc;
+	private final Accordion accordion;
 	private final SelectedTagsPane<T> selectedTagsPane;
 
 	private Set<S> sections;
-	private EventHandler<ActionEvent> selectTagHandler;
-	private EventHandler<ActionEvent> selectSectionHandler;
-	private EventHandler<ActionEvent> updateSectionCallback;
+	private Runnable selectTagCallback;
+	private Runnable selectSectionCallback;
+	private Runnable updateSectionCallback;
 
 	private boolean sectionDisableWhenZero;
 
@@ -84,25 +82,25 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		patternField.textProperty().addListener((ov, o, n) -> refreshWithPatternAsync());
 		getChildren().add(new HBox(5, patternField));
 
-		sectionAcc = new Accordion();
-		sectionAcc.getStyleClass().add("section-accordion");
-		sectionAcc.focusTraversableProperty().bind(focusTraversableProperty());
-		sectionAcc.expandedPaneProperty().addListener((ov, o, n) -> {
-			if (n == null && !sectionAcc.getPanes().isEmpty()) {
+		accordion = new Accordion();
+		accordion.getStyleClass().add("section-accordion");
+		accordion.focusTraversableProperty().bind(focusTraversableProperty());
+		accordion.expandedPaneProperty().addListener((ov, o, n) -> {
+			if (n == null && !accordion.getPanes().isEmpty()) {
 				new Timer("section-auto-expand-timer", true).schedule(new TimerTask() {
 					@Override
 					public void run() {
-						if (sectionAcc.expandedPaneProperty().isNull().get()
-								 && !sectionAcc.getPanes().isEmpty()) {
-							sectionAcc.setExpandedPane(sectionAcc.getPanes().get(0));
+						if (accordion.expandedPaneProperty().isNull().get()
+								 && !accordion.getPanes().isEmpty()) {
+							accordion.setExpandedPane(accordion.getPanes().get(0));
 						}
 					}
 				}, 500);
 			}
 		});
-		sectionAcc.expandedPaneProperty().addListener((ov, o, n) -> selectSectionHandler.handle(null));
+		accordion.expandedPaneProperty().addListener((ov, o, n) -> selectSectionCallback.run());
 
-		final StackPane centerPane = new StackPane(sectionAcc);
+		final StackPane centerPane = new StackPane(accordion);
 		centerPane.setAlignment(Pos.BOTTOM_CENTER);
 
 		final ExtItemDropPane<T> extItemDropPane = new ExtItemDropPane<>();
@@ -151,19 +149,19 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		VBox.setVgrow(centerPane, Priority.ALWAYS);
 	}
 
-	public void setOnUpdateTag(final EventHandler<ActionEvent> handler) {
-		tagDropPane.setOnUpdate(handler);
+	public void setOnUpdateTag(final Runnable callback) {
+		tagDropPane.setOnUpdate(callback);
 	}
 
 	@SuppressWarnings("unchecked")
 	public void clearSelection() {
-		sectionAcc.getPanes().forEach(pane -> ((SectionPane<S, T>) pane).clearSelection());
+		accordion.getPanes().forEach(pane -> ((SectionPane<S, T>) pane).clearSelection());
 	}
 
 	public void clear(final String tagName) {
-		for(final TitledPane sectionPane: sectionAcc.getPanes()) {
+		for(final TitledPane pane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
-			final TagList<S, T> tagList = (TagList<S, T>) sectionPane.getContent();
+			final TagList<S, T> tagList = (TagList<S, T>) pane.getContent();
 			tagList.clear(tagName);
 		}
 	}
@@ -173,26 +171,26 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		initTagName = tagName;
 
 		refreshAsync(() -> {
-			for(final TitledPane tp: sectionAcc.getPanes()) {
+			for(final TitledPane tp: accordion.getPanes()) {
 				@SuppressWarnings("unchecked")
-				final SectionPane<Section, Tag> sectionPane = (SectionPane<Section, Tag>) tp;
-				if (sectionPane.getSection().getName().equals(sectionName)) {
-					sectionPane.selectLight(tagName);
+				final SectionPane<Section, Tag> pane = (SectionPane<Section, Tag>) tp;
+				if (pane.getSection().getName().equals(sectionName)) {
+					pane.selectLight(tagName);
 					break;
 				}
 			}
 		});
 	}
 
-	public void setOnSelectTag(final EventHandler<ActionEvent> callback) {
-		selectTagHandler = e -> {
+	public void setOnSelectTag(final Runnable callback) {
+		selectTagCallback = () -> {
 			unselectOthers();
 			selectedTagsPane.refresh(getAllSelectedTags());
-			callback.handle(e);
+			callback.run();
 		};
 	}
 
-	public void setOnUpdateSection(final EventHandler<ActionEvent> callback) {
+	public void setOnUpdateSection(final Runnable callback) {
 		updateSectionCallback = callback;
 		sectionDropPane.setOnUpdateSection(callback);
 	}
@@ -207,7 +205,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		final Set<T> includes = getIncludedTags();
 		final Set<T> excludes = getExcludedTags();
 		final boolean checkMode = isCheckMode();
-		for(final TitledPane titledPane: sectionAcc.getPanes()) {
+		for(final TitledPane titledPane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
 			final SectionPane<S, T> sectionPane = (SectionPane<S, T>) titledPane;
 			if (!checkMode) {
@@ -223,7 +221,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 
 	public Set<T> getAllTags() {
 		final Set<T> tags = new LinkedHashSet<>();
-		for(final TitledPane titledPane: sectionAcc.getPanes()) {
+		for(final TitledPane titledPane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
 			final TagList<S, T> tagList = (TagList<S, T>) titledPane.getContent();
 			tags.addAll(tagList.getTags());
@@ -256,7 +254,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 	private void refreshSections() {
 		// delete sections
 		final Set<Section> existingSections = new LinkedHashSet<>();
-		for(final Iterator<TitledPane> i = sectionAcc.getPanes().iterator(); i.hasNext();) {
+		for(final Iterator<TitledPane> i = accordion.getPanes().iterator(); i.hasNext();) {
 			@SuppressWarnings("unchecked")
 			final TagList<S, T> tagList = (TagList<S, T>) i.next().getContent();
 			if (sections.contains(tagList.getSection())) {
@@ -270,13 +268,13 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		int index = 0;
 		for(final S section: sections) {
 			if (!existingSections.contains(section)) {
-				final SectionPane<S, T> sectionPane = new SectionPane<>(section, tagService, showExcludeBox);
-				sectionPane.focusTraversableProperty().bind(focusTraversableProperty());
-				sectionPane.setDisableWhenZero(sectionDisableWhenZero);
-				sectionPane.setLazyCount(lazyCount);
-				sectionPane.setOnSelectTag(selectTagHandler);
-				sectionPane.setOnUpdateSection(updateSectionCallback);
-				sectionAcc.getPanes().add(index, sectionPane);
+				final SectionPane<S, T> pane = new SectionPane<>(section, tagService, showExcludeBox);
+				pane.focusTraversableProperty().bind(focusTraversableProperty());
+				pane.setDisableWhenZero(sectionDisableWhenZero);
+				pane.setLazyCount(lazyCount);
+				pane.setOnSelectTag(selectTagCallback);
+				pane.setOnUpdateSection(updateSectionCallback);
+				accordion.getPanes().add(index, pane);
 			}
 			index++;
 		}
@@ -286,7 +284,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		final String pattern = patternField.getText();
 		final Set<T> includes = getIncludedTags();
 		final Set<T> excludes = getExcludedTags();
-		for(final TitledPane pane: sectionAcc.getPanes()) {
+		for(final TitledPane pane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
 			final SectionPane<S, T> sectionPane = (SectionPane<S, T>) pane;
 			sectionPane.refresh(pattern, includes, excludes, itemPattern);
@@ -340,22 +338,22 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 
 	private synchronized void refreshWithPattern() {
 		final SearchPane<S, T> searchPane;
-		if (sectionAcc.getPanes().size() == 1 && sectionAcc.getPanes().get(0) instanceof SearchPane) {
-			@SuppressWarnings("unchecked") final SearchPane<S, T> sp = (SearchPane<S, T>) sectionAcc.getPanes().get(0);
+		if (accordion.getPanes().size() == 1 && accordion.getPanes().get(0) instanceof SearchPane) {
+			@SuppressWarnings("unchecked") final SearchPane<S, T> sp = (SearchPane<S, T>) accordion.getPanes().get(0);
 			searchPane = sp;
 		} else {
 			searchPane = new SearchPane<>(tagService, showExcludeBox);
-			searchPane.setOnSelectTag(selectTagHandler);
+			searchPane.setOnSelectTag(selectTagCallback);
 			searchPane.setOnUpdateSection(updateSectionCallback);
 
-			sectionAcc.getPanes().setAll(searchPane);
+			accordion.getPanes().setAll(searchPane);
 		}
 		searchPane.refresh(patternField.getText(), getIncludedTags(), getExcludedTags(), itemPattern);
 	}
 
 	private Set<T> getIncludedTags() {
 		final Set<T> tags = new LinkedHashSet<>();
-		for(final TitledPane titledPane: sectionAcc.getPanes()) {
+		for(final TitledPane titledPane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
 			final TagList<S, T> tagList = (TagList<S, T>) titledPane.getContent();
 			tags.addAll(tagList.getIncludedTags());
@@ -366,7 +364,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 
 	public Set<T> getExcludedTags() {
 		final Set<T> tags = new LinkedHashSet<>();
-		for(final TitledPane titledPane: sectionAcc.getPanes()) {
+		for(final TitledPane titledPane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
 			final TagList<S, T> tagList = (TagList<S, T>) titledPane.getContent();
 			tags.addAll(tagList.getExcludedTags());
@@ -396,7 +394,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 
 	private T getSelectedTag() {
 		T tag = null;
-		for(final TitledPane sectionPane: sectionAcc.getPanes()) {
+		for(final TitledPane sectionPane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
 			final TagList<S, T> tagList = (TagList<S, T>) sectionPane.getContent();
 			tag = tagList.getSelectedTag();
@@ -410,7 +408,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 
 	private boolean isCheckMode() {
 		boolean checkMode = false;
-		for(final TitledPane titledPane: sectionAcc.getPanes()) {
+		for(final TitledPane titledPane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
 			final TagList<S, T> tagList = (TagList<S, T>) titledPane.getContent();
 			checkMode = tagList.hasCheckedTag();
@@ -422,8 +420,8 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 	}
 
 	private void unselectOthers() {
-		final TitledPane expanded = sectionAcc.getExpandedPane();
-		for(final TitledPane pane: sectionAcc.getPanes()) {
+		final TitledPane expanded = accordion.getExpandedPane();
+		for(final TitledPane pane: accordion.getPanes()) {
 			if (pane != expanded) {
 				@SuppressWarnings("unchecked")
 				final SectionPane<S, T> sectionPane = (SectionPane<S, T>) pane;
@@ -432,13 +430,13 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		}
 	}
 
-	public void setOnSelectSection(EventHandler<ActionEvent> handler) {
-		selectSectionHandler = handler;
+	public void setOnSelectSection(Runnable callback) {
+		selectSectionCallback = callback;
 	}
 
 	public S getSelectedSection() {
 		@SuppressWarnings("unchecked")
-		final SectionPane<S, T> sectionPane = (SectionPane<S, T>) sectionAcc.getExpandedPane();
+		final SectionPane<S, T> sectionPane = (SectionPane<S, T>) accordion.getExpandedPane();
 		return sectionPane == null? null: sectionPane.getSection();
 	}
 }

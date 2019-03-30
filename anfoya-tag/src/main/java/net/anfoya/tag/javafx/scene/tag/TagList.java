@@ -250,12 +250,12 @@ public class TagList<S extends Section, T extends Tag> extends ListView<TagListI
 		return task;
 	}
 
-	public void setOnIncExcTag(final EventHandler<ActionEvent> handler) {
+	public void setOnIncExcTag(final Runnable callback) {
 		incExcListener = (ov, oldVal, newVal) -> {
 			if (refreshing) {
 				return;
 			}
-			handler.handle(null);
+			callback.run();
 		};
 		for(final TagListItem<T> item: nameTags.values()) {
 			item.includedProperty().addListener(incExcListener);

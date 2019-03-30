@@ -9,8 +9,6 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.TitledPane;
@@ -53,7 +51,7 @@ public class SectionPane<S extends Section, T extends Tag> extends TitledPane {
 
 	private boolean delayedExpand;
 
-	private EventHandler<ActionEvent> updateHandler;
+	private Runnable updateCallback;
 
 	public SectionPane(final S section, final TagService<S, T> tagService, final boolean showExcludeBox) {
 		getStyleClass().add("section-pane");
@@ -149,7 +147,7 @@ public class SectionPane<S extends Section, T extends Tag> extends TitledPane {
 				return null;
 			}
 		};
-		task.setOnSucceeded(e -> updateHandler.handle(null));
+		task.setOnSucceeded(e -> updateCallback.run());
 		task.setOnFailed(e -> LOGGER.error("move {} to {}", tag, section, e.getSource().getException()));
 		ThreadPool.getDefault().submit(PoolPriority.MAX, "move " + tag.getName() + " to " + section.getName(), task);
 	}
@@ -280,17 +278,17 @@ public class SectionPane<S extends Section, T extends Tag> extends TitledPane {
 		this.lazyCount = lazy;
 	}
 
-	public void setOnSelectTag(final EventHandler<ActionEvent> handler) {
-		tagList.setOnIncExcTag(handler);
+	public void setOnSelectTag(final Runnable callback) {
+		tagList.setOnIncExcTag(callback);
 		tagList.setOnSelectTag(e -> {
 			if (isExpanded()) {
-				handler.handle(e);
+				callback.run();
 			}
 		});
 	}
 
-	public void setOnUpdateSection(final EventHandler<ActionEvent> handler) {
-		updateHandler = handler;
+	public void setOnUpdateSection(final Runnable callback) {
+		updateCallback = callback;
 	}
 
 	public void clearSelection() {
