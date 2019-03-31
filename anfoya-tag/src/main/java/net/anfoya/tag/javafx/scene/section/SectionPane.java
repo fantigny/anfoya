@@ -75,10 +75,10 @@ public class SectionPane<S extends Section, T extends Tag> extends TitledPane {
 
 		setOnDragDetected(e -> {
 			if (section != null && !section.isSystem()) {
-		        final ClipboardContent content = new ClipboardContent();
-		        content.put(Section.SECTION_DATA_FORMAT, section);
+				final ClipboardContent content = new ClipboardContent();
+				content.put(Section.SECTION_DATA_FORMAT, section);
 
-		        final Image image = new DndHelper(getScene().getStylesheets()).textToImage(section.getName());
+				final Image image = new DndHelper(getScene().getStylesheets()).textToImage(section.getName());
 
 				final Dragboard db = startDragAndDrop(TransferMode.ANY);
 				db.setContent(content);
@@ -280,7 +280,7 @@ public class SectionPane<S extends Section, T extends Tag> extends TitledPane {
 
 	public void setOnSelectTag(final Runnable callback) {
 		tagList.setOnIncExcTag(callback);
-		tagList.setOnSelectTag(e -> {
+		tagList.setOnSelectTag(() -> {
 			if (isExpanded()) {
 				callback.run();
 			}

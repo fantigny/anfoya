@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import net.anfoya.java.util.concurrent.ThreadPool;
@@ -50,7 +48,7 @@ public class TagList<S extends Section, T extends Tag> extends ListView<TagListI
 
 
 	public TagList(final S section, final TagService<S, T> tagService, final boolean showExcludeBox) {
-        getStyleClass().add("tag-list");
+		getStyleClass().add("tag-list");
 
 		this.tagService = tagService;
 		this.section = section;
@@ -263,13 +261,13 @@ public class TagList<S extends Section, T extends Tag> extends ListView<TagListI
 		}
 	}
 
-	public void setOnSelectTag(final EventHandler<ActionEvent> handler) {
+	public void setOnSelectTag(final Runnable callback) {
 		getSelectionModel().selectedItemProperty().addListener((ov, oldVal, newVal) -> {
 			if (refreshing) {
 				return;
 			}
 			if (!hasCheckedTag()) {
-				handler.handle(null);
+				callback.run();
 			}
 		});
 	}
