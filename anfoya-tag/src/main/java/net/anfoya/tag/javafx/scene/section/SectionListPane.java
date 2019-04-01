@@ -351,7 +351,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		searchPane.refresh(patternField.getText(), getIncludedTags(), getExcludedTags(), itemPattern);
 	}
 
-	private Set<T> getIncludedTags() {
+	public Set<T> getIncludedTags() {
 		final Set<T> tags = new LinkedHashSet<>();
 		for(final TitledPane titledPane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
