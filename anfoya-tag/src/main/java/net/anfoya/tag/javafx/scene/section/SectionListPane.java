@@ -91,7 +91,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 					@Override
 					public void run() {
 						if (accordion.expandedPaneProperty().isNull().get()
-								 && !accordion.getPanes().isEmpty()) {
+								&& !accordion.getPanes().isEmpty()) {
 							accordion.setExpandedPane(accordion.getPanes().get(0));
 						}
 					}
@@ -392,7 +392,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		return null;
 	}
 
-	private T getSelectedTag() {
+	public T getSelectedTag() {
 		T tag = null;
 		for(final TitledPane sectionPane: accordion.getPanes()) {
 			@SuppressWarnings("unchecked")
