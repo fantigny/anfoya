@@ -12,14 +12,14 @@ import net.anfoya.java.util.VoidCallback;
 import net.anfoya.java.util.system.ShutdownHook;
 
 public class ThreadPool {
-	public enum PoolPriority { MIN, REG, MAX, MUST_RUN };
+	public enum PoolPriority { MIN, REG, MAX, MUST_RUN }
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPool.class);
-	private static final Map<PoolPriority, ObservableExecutorService> priorityPools = new HashMap<PoolPriority, ObservableExecutorService>();
+	private static final Map<PoolPriority, ObservableExecutorService> priorityPools = new HashMap<>();
 
 	private static ThreadPool THREAD_POOL = null;
 
-	// initialize
+	// initialise
 	public static void setDefault(ObservableExecutorService min, ObservableExecutorService reg, ObservableExecutorService max) {
 		if (THREAD_POOL != null) {
 			throw new IllegalStateException("already initialized");
@@ -44,7 +44,7 @@ public class ThreadPool {
 		priorityPools.put(PoolPriority.REG, reg);
 		priorityPools.put(PoolPriority.MAX, max);
 		priorityPools.put(PoolPriority.MUST_RUN, ObservableExecutors.newCachedThreadPool("must-run", Thread.NORM_PRIORITY));
-		
+
 		new ShutdownHook(() -> waitForMustRun(), false);
 	}
 
