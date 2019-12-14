@@ -21,22 +21,23 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Popup;
 import javafx.util.Callback;
+import javafx.util.StringConverter;
 import net.anfoya.java.lang.StringHelper;
-import net.anfoya.java.util.concurrent.ThreadPool.PoolPriority;
 import net.anfoya.java.util.concurrent.ThreadPool;
+import net.anfoya.java.util.concurrent.ThreadPool.PoolPriority;
 
-public class ComboField extends TextField {
+public class ComboField<K> extends TextField {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ComboField.class);
 
-	private final ObservableList<String> items;
+	private final ObservableList<K> items;
 
 	private final Popup popup;
-	private final ListView<String> listView;
+	private final ListView<K> listView;
 	private final BooleanProperty showingProperty;
 	private volatile boolean firstShow;
 
-	private Callback<String, String> textFactory;
-	private Task<ObservableList<String>> filterTask;
+	private Callback<K, K> textFactory;
+	private Task<ObservableList<K>> filterTask;
 	private int filterTaskId;
 
 	private volatile boolean emptyBackspaceReady;
@@ -45,24 +46,30 @@ public class ComboField extends TextField {
 	private double cellHeight;
 	private double cellWidth;
 
-	private Callback<ListView<String>, ListCell<String>> cellFactory;
+	private Callback<ListView<K>, ListCell<K>> cellFactory;
+
+	private EventHandler<ActionEvent> fieldActionCallback;
+
+	private EventHandler<ActionEvent> listRequestCallback;
+
+	private StringConverter<K> converter;
 
 	public ComboField() {
 		super("");
-        getStyleClass().add("combofield");
+		getStyleClass().add("combofield");
 		this.items = FXCollections.observableArrayList();
 
-		listView = new ListView<String>();
-		listView.setCellFactory(new Callback<ListView<String>, ListCell<String>>() {
-		    @Override public ListCell<String> call(final ListView<String> listView) {
-		    	final ListCell<String> cell = cellFactory  == null? new ListCell<String>(): cellFactory.call(listView);
-		    	if (firstShow) {
-			    	cell.widthProperty().addListener((ov, o, n) -> {
+		listView = new ListView<>();
+		listView.setCellFactory(new Callback<ListView<K>, ListCell<K>>() {
+			@Override public ListCell<K> call(final ListView<K> listView) {
+				final ListCell<K> cell = cellFactory  == null? new ListCell<>(): cellFactory.call(listView);
+				if (firstShow) {
+					cell.widthProperty().addListener((ov, o, n) -> {
 						updateCellSize(cell.getHeight(), cell.getWidth());
 					});
-		    	}
-		    	return cell;
-		    }
+				}
+				return cell;
+			}
 		});
 		listView.setOnMouseClicked(e -> {
 			if (!listView.getSelectionModel().isEmpty()) {
@@ -123,15 +130,31 @@ public class ComboField extends TextField {
 		});
 	}
 
-	public void setFilter(final Callback<String, String> textFactory) {
+	public void setFilter(final Callback<K, K> textFactory) {
 		this.textFactory = textFactory;
 	}
 
-	public void setItems(final Set<String> items) {
+	public void setItems(final Set<K> items) {
 		this.items.setAll(items);
 		if (isShowing()) {
 			filter(getText());
 		}
+	}
+
+	public void setConverter(StringConverter<K> converter) {
+		this.converter = converter;
+	}
+
+	public void setFieldValue(K item) {
+		setText(converter.toString(item));
+	}
+
+	public K getFieldValue() {
+		return converter.fromString(getText());
+	}
+
+	public ObservableList<K> getItems() {
+		return listView.getItems();
 	}
 
 	public boolean isShowing() {
@@ -150,13 +173,21 @@ public class ComboField extends TextField {
 		showingProperty.set(false);
 	}
 
-	public void setCellFactory(final Callback<ListView<String>, ListCell<String>> factory) {
+	public void setCellFactory(final Callback<ListView<K>, ListCell<K>> factory) {
 		cellFactory =  factory;
 	}
 
 	public void setCellSize(final double height, final double width) {
 		cellHeight = height;
 		cellWidth = width;
+	}
+
+	public void setOnFieldAction(EventHandler<ActionEvent> callback) {
+		fieldActionCallback = callback;
+	}
+
+	public void setOnListRequest(EventHandler<ActionEvent> callback) {
+		listRequestCallback = callback;
 	}
 
 	public void setOnBackspaceAction(final EventHandler<ActionEvent> handler) {
@@ -175,20 +206,20 @@ public class ComboField extends TextField {
 			return;
 		}
 
-		filterTask = new Task<ObservableList<String>>() {
+		filterTask = new Task<ObservableList<K>>() {
 			@Override
-			protected ObservableList<String> call() throws Exception {
+			protected ObservableList<K> call() throws Exception {
 				return FXCollections.observableArrayList(items.filtered(s ->
-					textFactory == null
-						? StringHelper.containsIgnoreCase(s, n)
-						: StringHelper.containsIgnoreCase(textFactory.call(s), n)));
+				textFactory == null
+				? StringHelper.containsIgnoreCase(s.toString(), n)
+						: StringHelper.containsIgnoreCase(textFactory.call(s).toString(), n)));
 			}
 		};
 		filterTask.setOnSucceeded(e -> {
 			if (taskId != filterTaskId) {
 				return;
 			}
-			final ObservableList<String> filtered = filterTask.getValue();
+			final ObservableList<K> filtered = filterTask.getValue();
 			if (filtered.isEmpty()) {
 				hide();
 				LOGGER.debug("no item match");
@@ -202,7 +233,7 @@ public class ComboField extends TextField {
 		ThreadPool.getDefault().submit(PoolPriority.MAX, "filtering items with " + n, filterTask);
 	}
 
-	private void updatePopup(final ObservableList<String> items) {
+	private void updatePopup(final ObservableList<K> items) {
 		final double height = Math.max(25, Math.min(200, items.size() * ((cellHeight > 0? cellHeight:24) + 1)));
 		final double width = Math.max(100, Math.min(500, cellWidth > 0? cellWidth: 500));
 
@@ -236,12 +267,14 @@ public class ComboField extends TextField {
 	private void actionFromTextField() {
 		LOGGER.warn("action from textfield, text: {}", getText());
 		getOnAction().handle(new ActionEvent());
+		fieldActionCallback.handle(new ActionEvent());
 	}
 
 	private void actionFromListView() {
 		LOGGER.warn("action from listview, selected item: {}", listView.getSelectionModel().getSelectedItem());
-		setText(listView.getSelectionModel().getSelectedItem());
+		setText(listView.getSelectionModel().getSelectedItem().toString());
 		getOnAction().handle(new ActionEvent());
 		hide();
+		listRequestCallback.handle(new ActionEvent());
 	}
 }
