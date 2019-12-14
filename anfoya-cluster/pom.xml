@@ -39,10 +39,12 @@
 			<artifactId>jgroups</artifactId>
 			<version>3.4.6.Final</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
 			<version>13.0.1</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- test -->
