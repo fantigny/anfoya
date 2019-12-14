@@ -267,7 +267,9 @@ public class ComboField<K> extends TextField {
 	private void actionFromTextField() {
 		LOGGER.warn("action from textfield, text: {}", getText());
 		getOnAction().handle(new ActionEvent());
-		fieldActionCallback.handle(new ActionEvent());
+		if (fieldActionCallback != null) {
+			fieldActionCallback.handle(new ActionEvent());
+		}
 	}
 
 	private void actionFromListView() {
@@ -275,6 +277,8 @@ public class ComboField<K> extends TextField {
 		setText(listView.getSelectionModel().getSelectedItem().toString());
 		getOnAction().handle(new ActionEvent());
 		hide();
-		listRequestCallback.handle(new ActionEvent());
+		if (listRequestCallback != null) {
+			listRequestCallback.handle(new ActionEvent());
+		}
 	}
 }
