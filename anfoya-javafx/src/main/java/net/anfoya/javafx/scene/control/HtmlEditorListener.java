@@ -1,5 +1,7 @@
 package net.anfoya.javafx.scene.control;
 
+import com.sun.javafx.PlatformUtil;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.input.KeyCode;
@@ -19,20 +21,22 @@ public class HtmlEditorListener {
 
 		editor.setOnMouseClicked(e -> checkEdition(editor.getHtmlText()));
 		editor.addEventFilter(KeyEvent.KEY_TYPED, e -> checkEdition(editor.getHtmlText()));
-		
-		// fix enter ignored on linux
-		WebView editorView = (WebView) editor.lookup(".web-view");
-		editor.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-			if (e.getCode() == KeyCode.ENTER) {
-				e.consume();
-				editorView.fireEvent(new KeyEvent(
-						e.getSource(),
-						editorView,
-						KeyEvent.KEY_TYPED,
-						"\r", "", KeyCode.ENTER,
-						false, true, false, false));
-			}
-		});
+
+		// fix <enter> key ignored on linux
+		if (PlatformUtil.isLinux()) {
+			final WebView editorView = (WebView) editor.lookup(".web-view");
+			editor.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+				if (e.getCode() == KeyCode.ENTER) {
+					e.consume();
+					editorView.fireEvent(new KeyEvent(
+							e.getSource(),
+							editorView,
+							KeyEvent.KEY_TYPED,
+							"\r", "", KeyCode.ENTER,
+							false, true, false, false));
+				}
+			});
+		}
 	}
 
 	public BooleanProperty editedProperty() {
