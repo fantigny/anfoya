@@ -22,18 +22,21 @@
 		</plugins>
 	</build>
 	<dependencies>
+		<!-- home made -->
 		<dependency>
 			<groupId>net.anfoya</groupId>
 			<artifactId>anfoya-tools</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 
-		<!-- compile -->
+		<!-- others -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.10</version>
 		</dependency>
+		
+		<!-- provided -->
 		<dependency>
 			<groupId>com.yuvimasory</groupId>
 			<artifactId>orange-extensions</artifactId>
