@@ -18,13 +18,17 @@ public class HtmlEditorLinuxEnterFix implements EventHandler<KeyEvent> {
 		}
 
 		// fix <enter> key ignored on linux
-		if (event.getCode() == KeyCode.ENTER) {
-			event.consume();
+		if (event.getCode() == KeyCode.ENTER) {			
 			HTMLEditor editor = (HTMLEditor) event.getSource();
-			WebView editorView = (WebView) editor.lookup("wev-view");
-			editorView.fireEvent(new KeyEvent(editor, editorView, KeyEvent.KEY_TYPED,
+			WebView view = (WebView) editor.lookup(".web-view");
+			KeyEvent enterKeyEvent = new KeyEvent(
+					editor, view,
+					KeyEvent.KEY_TYPED,
 					"\r", "", KeyCode.ENTER,
-					false, true, false, false));
+					false, false, false, false); 
+			
+			event.consume();
+			view.fireEvent(enterKeyEvent);
 		}
 	}
 }
