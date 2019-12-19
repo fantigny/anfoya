@@ -17,7 +17,6 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import netscape.javascript.JSException;
 
 public final class WebViewFitContent extends Region {
 	private static final Logger LOGGER = LoggerFactory.getLogger(WebViewFitContent.class);
@@ -71,7 +70,7 @@ public final class WebViewFitContent extends Region {
 
 				LOGGER.debug("{}", height);
 			}
-		} catch (final JSException e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -83,20 +82,20 @@ public final class WebViewFitContent extends Region {
 	public void setScrollHandler(final EventHandler<ScrollEvent> handler) {
 		final EventDispatcher eventDispatcher = getEventDispatcher();
 		setEventDispatcher((e, tail) -> {
-	    	if (e.getEventType() == ScrollEvent.SCROLL) {
-	    		final ScrollEvent event = (ScrollEvent) e;
-	    		if (event.getDeltaY() != 0) {
-		    		handler.handle(event);
-		    		e = new ScrollEvent(
-		    				event.getSource(), event.getTarget(), event.getEventType()
-		    				, event.getX(), event.getY(), event.getScreenX(), event.getSceneY()
-		    				, event.isShiftDown(), event.isControlDown(), event.isAltDown(), event.isMetaDown()
-		    				, event.isDirect(), event.isInertia()
-		    				, event.getDeltaX(), 0, event.getTotalDeltaX(), 0
-		    				, event.getTextDeltaXUnits(), event.getTextDeltaX(), event.getTextDeltaYUnits(), 0
-		    				, event.getTouchCount(), event.getPickResult());
-	    		}
-	    	}
+			if (e.getEventType() == ScrollEvent.SCROLL) {
+				final ScrollEvent event = (ScrollEvent) e;
+				if (event.getDeltaY() != 0) {
+					handler.handle(event);
+					e = new ScrollEvent(
+							event.getSource(), event.getTarget(), event.getEventType()
+							, event.getX(), event.getY(), event.getScreenX(), event.getSceneY()
+							, event.isShiftDown(), event.isControlDown(), event.isAltDown(), event.isMetaDown()
+							, event.isDirect(), event.isInertia()
+							, event.getDeltaX(), 0, event.getTotalDeltaX(), 0
+							, event.getTextDeltaXUnits(), event.getTextDeltaX(), event.getTextDeltaYUnits(), 0
+							, event.getTouchCount(), event.getPickResult());
+				}
+			}
 			return eventDispatcher.dispatchEvent(e, tail);
 		});
 	}
