@@ -35,6 +35,11 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.10</version>
 		</dependency>
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna-platform</artifactId>
+			<version>5.5.0</version>
+		</dependency>
 		
 		<!-- provided -->
 		<dependency>
