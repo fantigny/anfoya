@@ -3,6 +3,8 @@ package net.anfoya.javafx.notification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.javafx.PlatformUtil;
+
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -18,13 +20,13 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import net.anfoya.java.util.concurrent.ThreadPool.PoolPriority;
 import net.anfoya.java.util.concurrent.ThreadPool;
+import net.anfoya.java.util.concurrent.ThreadPool.PoolPriority;
 import net.anfoya.javafx.scene.control.Notification.Notifier;
 
 public class NotificationService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
-	private static final boolean OSX = System.getProperty("os.name").contains("OS X");
+	private static final boolean IS_MAC = PlatformUtil.isMac();
 
 	private final Stage stage;
 
@@ -38,7 +40,7 @@ public class NotificationService {
 		this.stage = stage;
 		this.popupLifeTime = new SimpleIntegerProperty(0);
 
-		if (OSX) {
+		if (PlatformUtil.isMac()) {
 			applicationIcon = null;
 		} else if (stage.getIcons().isEmpty()) {
 			applicationIcon = new Image(this.getClass().getResource("/net/anfoya/mail/img/Mail64.png").toExternalForm());
@@ -62,7 +64,7 @@ public class NotificationService {
 		if (text.isEmpty()) {
 			resetIconBadge();
 		} else {
-			if (OSX) {
+			if (IS_MAC) {
 				com.apple.eawt.Application.getApplication().setDockIconBadge(text);
 			} else {
 				if (badgeTask != null) {
@@ -87,14 +89,14 @@ public class NotificationService {
 				};
 				badgeTask.setOnFailed(e -> LOGGER.error("create icon badge {}", text, e.getSource().getException()));
 				badgeTask.setOnSucceeded(e -> stage.getIcons().setAll(SwingFXUtils.toFXImage(SwingFXUtils.fromFXImage(
-								badgeTask.getValue().snapshot(snapshotParameters, null), null), null)));
+						badgeTask.getValue().snapshot(snapshotParameters, null), null), null)));
 				ThreadPool.getDefault().submit(PoolPriority.MIN, "set icon badge", badgeTask);
 			}
 		}
 	}
 
 	public void resetIconBadge() {
-		if (OSX) {
+		if (IS_MAC) {
 			com.apple.eawt.Application.getApplication().setDockIconBadge(null);
 		} else {
 			onFxThread(() -> stage.getIcons().setAll(applicationIcon));
