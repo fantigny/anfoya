@@ -7,13 +7,13 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLStreamHandler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.anfoya.java.net.filtered.easylist.EasyListRuleSet;
 import net.anfoya.java.net.filtered.easylist.model.Rule;
 import net.anfoya.java.net.filtered.easylist.parser.Parser;
 import net.anfoya.java.net.filtered.easylist.parser.ParserException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class InternetLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(InternetLoader.class);
@@ -30,7 +30,6 @@ public class InternetLoader {
 		EasyListRuleSet easyList;
 		try {
 			// avoid handler factory re-entrance
-			@SuppressWarnings("restriction")
 			final URLStreamHandler handler = "https".equals(url.getProtocol())
 					? new sun.net.www.protocol.https.Handler()
 					: new sun.net.www.protocol.http.Handler();
