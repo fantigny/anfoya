@@ -14,7 +14,7 @@ import net.anfoya.java.net.url.handler.StartHandler;
 
 public class CustomHandlerFactory implements URLStreamHandlerFactory {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CustomHandlerFactory.class);
-    private static final String protocolPathProp = "java.protocol.handler.pkgs";
+	private static final String protocolPathProp = "java.protocol.handler.pkgs";
 	private final Matcher matcher;
 
 	public CustomHandlerFactory(final Matcher matcher) {
@@ -36,17 +36,16 @@ public class CustomHandlerFactory implements URLStreamHandlerFactory {
 	}
 
 	private URLStreamHandler getJavaHandler(final String protocol) {
-		if ("data".equals(protocol)
-				|| "about".equals(protocol)) {
+		if ("data".equals(protocol) || "about".equals(protocol)) {
 			return null;
 		}
 
 		String packagePrefixList = null;
 
-		packagePrefixList = java.security.AccessController.doPrivileged(
-		    new sun.security.action.GetPropertyAction(protocolPathProp,""));
+		packagePrefixList = java.security.AccessController
+				.doPrivileged(new sun.security.action.GetPropertyAction(protocolPathProp, ""));
 		if (packagePrefixList != "") {
-		    packagePrefixList += "|";
+			packagePrefixList += "|";
 		}
 
 		// REMIND: decide whether to allow the "null" class prefix
@@ -56,28 +55,26 @@ public class CustomHandlerFactory implements URLStreamHandlerFactory {
 		final StringTokenizer packagePrefixIter = new StringTokenizer(packagePrefixList, "|");
 
 		URLStreamHandler handler = null;
-		while (handler == null &&
-		       packagePrefixIter.hasMoreTokens()) {
-
-		    final String packagePrefix =
-		      packagePrefixIter.nextToken().trim();
-		    try {
-		        final String clsName = packagePrefix + "." + protocol + ".Handler";
-		        Class<?> cls = null;
-		        try {
-		            cls = Class.forName(clsName);
-		        } catch (final ClassNotFoundException e) {
-		            final ClassLoader cl = ClassLoader.getSystemClassLoader();
-		            if (cl != null) {
-		                cls = cl.loadClass(clsName);
-		            }
-		        }
-		        if (cls != null) {
-		            handler = (URLStreamHandler) cls.getConstructor().newInstance();
-		        }
-		    } catch (final Exception e) {
-		        // any number of exceptions can get thrown here
-		    }
+		while (handler == null && packagePrefixIter.hasMoreTokens()) {
+			final String packagePrefix = packagePrefixIter.nextToken().trim();
+			try {
+				final String clsName = packagePrefix + "." + protocol + ".Handler";
+				Class<?> cls = null;
+				try {
+					cls = Class.forName(clsName);
+				} catch (final ClassNotFoundException e) {
+					final ClassLoader cl = ClassLoader.getSystemClassLoader();
+					if (cl != null) {
+						cls = cl.loadClass(clsName);
+					}
+				}
+				if (cls != null) {
+					handler = (URLStreamHandler) cls.getConstructor().newInstance();
+					break;
+				}
+			} catch (final Exception e) {
+				// any number of exceptions can get thrown here
+			}
 		}
 		if (handler == null) {
 			LOGGER.warn("no handler for {}", protocol);
