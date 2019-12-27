@@ -17,25 +17,27 @@ public class ShutdownHook {
 	}
 
 	protected ShutdownHook(final VoidCallable callable, final boolean daemon, final String className) {
-		final Thread hook = new Thread(() -> {
+		final String name = cleanName(className);
+		final Runnable hook = createHook(callable, name);
+		Runtime.getRuntime().addShutdownHook(new Thread(hook) {{ setDaemon(daemon); }});
+	}
+
+	private String cleanName(String className) {
+		try {
+			return className.substring(className.lastIndexOf(".") + 1);
+		} catch (Exception e) {
+			return className;
+		}
+	}
+
+	private Runnable createHook(VoidCallable callable, String name) {
+		return () -> {
 			try {
 				callable.call();
+				LOGGER.info("shutdown complete for {}", name);
 			} catch (Exception e) {
-				LOGGER.error("shutdown hook execution failed for {}", className, e);
-				return;
+				LOGGER.error("shutdown hook execution failed for {}", name, e);
 			}
-
-			String simpleName;
-			try {
-				simpleName = className.substring(className.lastIndexOf(".") + 1);
-			} catch (Exception e) {
-				simpleName = className;
-			}
-			
-			LOGGER.info("shutdown complete for {}", simpleName);
-		});
-		hook.setDaemon(daemon);
-
-		Runtime.getRuntime().addShutdownHook(hook);
+		};
 	}
 }

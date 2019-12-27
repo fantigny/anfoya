@@ -17,28 +17,32 @@ public class ThreadPool {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPool.class);
 	private static final Map<PoolPriority, ObservableExecutorService> priorityPools = new HashMap<>();
 
-	private static ThreadPool THREAD_POOL = null;
+	////////////////////
+	////////////////////
+	
+	private static ThreadPool instance = null;
 
-	// initialise
 	public static void setDefault(ObservableExecutorService min, ObservableExecutorService reg, ObservableExecutorService max) {
-		if (THREAD_POOL != null) {
+		if (instance != null) {
 			throw new IllegalStateException("already initialized");
 		}
 
-		THREAD_POOL = new ThreadPool(min, reg, max);
+		instance = new ThreadPool(min, reg, max);
 	}
 
-	// singleton
 	public static ThreadPool getDefault() {
-		if (THREAD_POOL == null) {
-			THREAD_POOL = new ThreadPool(ObservableExecutors.newCachedThreadPool("min", Thread.MIN_PRIORITY)
+		if (instance == null) {
+			instance = new ThreadPool(ObservableExecutors.newCachedThreadPool("min", Thread.MIN_PRIORITY)
 					, ObservableExecutors.newCachedThreadPool("reg", Thread.NORM_PRIORITY)
 					, ObservableExecutors.newCachedThreadPool("max", Thread.MAX_PRIORITY));
 		}
 
-		return THREAD_POOL;
+		return instance;
 	}
 
+	////////////////////
+	////////////////////
+	
 	private ThreadPool(ObservableExecutorService min, ObservableExecutorService reg, ObservableExecutorService max) {
 		priorityPools.put(PoolPriority.MIN, min);
 		priorityPools.put(PoolPriority.REG, reg);
