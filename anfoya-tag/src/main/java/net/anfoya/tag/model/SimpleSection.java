@@ -8,9 +8,6 @@ public class SimpleSection implements Section, Comparable<SimpleSection> {
 	public static final String NO_SECTION_NAME = "[to sort]";
 	public static final String NO_ID = "section-with-no-id-";
 
-	public static final SimpleSection NO_SECTION = new SimpleSection(NO_SECTION_NAME);
-	public static final SimpleSection TO_WATCH = new SimpleSection(SimpleTag.TO_WATCH_NAME);
-
 	private final String id;
 	private final String name;
 	private final boolean system;
@@ -35,18 +32,18 @@ public class SimpleSection implements Section, Comparable<SimpleSection> {
 	}
 	@Override
 	public int hashCode() {
-	    return hash;
+		return hash;
 	}
-    @Override
+	@Override
 	public boolean equals(final Object other) {
-        if (other == null) {
+		if (other == null) {
 			return false;
 		}
-        if (!this.getClass().equals(other.getClass())) {
+		if (!this.getClass().equals(other.getClass())) {
 			return false;
 		}
-        return ((SimpleSection) other).name.equals(name);
-    }
+		return ((SimpleSection) other).name.equals(name);
+	}
 	@Override
 	public String getId() {
 		return id;
