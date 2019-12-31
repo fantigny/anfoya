@@ -4,23 +4,18 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.anfoya</groupId>
 	<artifactId>anfoya-libs</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>${revision}</version>
 	<packaging>pom</packaging>
 	<properties>
+		<revision>0.0.1-SNAPSHOT</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<profiles>
 		<profile>
-			<id>dev</id>
+			<id>PROD</id>
 			<properties>
-				<anfoya.net.version>0.0.1-SNAPSHOT</anfoya.net.version>
-			</properties>
-		</profile>
-		<profile>
-			<id>prod</id>
-			<properties>
-				<anfoya.net.version>1.0.0-191231</anfoya.net.version>
+				<revision>1.0.0-191231</revision>
 			</properties>
 		</profile>
 	</profiles>

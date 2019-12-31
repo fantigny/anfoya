@@ -6,9 +6,8 @@
 	<parent>
 		<groupId>net.anfoya</groupId>
 		<artifactId>anfoya-libs</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>${revision}</version>
 	</parent>
-	<version>${anfoya.net.version}</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
