@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.anfoya</groupId>
 	<artifactId>anfoya-libs</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>191231</version>
 	<packaging>pom</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
