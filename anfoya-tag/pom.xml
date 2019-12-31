@@ -11,7 +11,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -25,13 +24,12 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<dependencies>
 		<!-- home made -->
 		<dependency>
-			<groupId>net.anfoya</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>anfoya-javafx</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${revision}</version>
 		</dependency>
 
 		<!-- others -->

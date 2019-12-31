@@ -26,9 +26,10 @@
 	</build>
 	<dependencies>
 		<dependency>
+		<!-- home made -->
 			<groupId>${project.groupId}</groupId>
 			<artifactId>anfoya-tools</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>${revision}</version>
 		</dependency>
 
 		<!-- compile -->
