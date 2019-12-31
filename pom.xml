@@ -1,13 +1,29 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.anfoya</groupId>
 	<artifactId>anfoya-libs</artifactId>
-	<version>191231</version>
+	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+
+	<profiles>
+		<profile>
+			<id>dev</id>
+			<properties>
+				<anfoya.net.version>0.0.1-SNAPSHOT</anfoya.net.version>
+			</properties>
+		</profile>
+		<profile>
+			<id>prod</id>
+			<properties>
+				<anfoya.net.version>1.0.0-191231</anfoya.net.version>
+			</properties>
+		</profile>
+	</profiles>
 
 	<modules>
 		<module>anfoya-cluster</module>
