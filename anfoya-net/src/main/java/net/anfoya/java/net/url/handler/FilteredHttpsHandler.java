@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import javax.net.ssl.HttpsURLConnection;
-
 import net.anfoya.java.net.url.connection.DownloadAndStartConnection;
-import net.anfoya.java.net.url.connection.Ed2kWorkAroundHttpsConnection;
 import net.anfoya.java.net.url.connection.EmptyConnection;
 import net.anfoya.java.net.url.filter.Matcher;
 import sun.net.www.protocol.https.Handler;
@@ -26,8 +23,7 @@ public class FilteredHttpsHandler extends Handler {
 			return new DownloadAndStartConnection(url);
 		} else if (matcher != null && matcher.matches(urlStr)) {
 			return new EmptyConnection();
-		} else {
-			return new Ed2kWorkAroundHttpsConnection((HttpsURLConnection) super.openConnection(url));
 		}
+		return url.openConnection();
 	}
 }
