@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import net.anfoya.java.net.url.connection.DownloadAndStartConnection;
 import net.anfoya.java.net.url.connection.EmptyConnection;
 import net.anfoya.java.net.url.filter.Matcher;
 import sun.net.www.protocol.http.Handler;
@@ -18,12 +17,9 @@ public class FilteredHttpHandler extends Handler {
 
 	@Override
 	protected URLConnection openConnection(final URL url) throws IOException {
-		final String urlStr = url.toString();
-		if (urlStr.endsWith(".torrent")) {
-			return new DownloadAndStartConnection(url);
-		} else if (matcher != null && matcher.matches(urlStr)) {
+		if (matcher != null && matcher.matches(url.toString())) {
 			return new EmptyConnection();
 		}
-		return url.openConnection();
+		return super.openConnection(url);
 	}
 }
