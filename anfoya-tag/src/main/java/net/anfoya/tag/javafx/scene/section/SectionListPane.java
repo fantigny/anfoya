@@ -65,7 +65,7 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 	private String initSectionName;
 	private String initTagName;
 
-	public SectionListPane(final TagService<S, T> tagService, UndoService undoService, final boolean withExcludeBox) {
+	public SectionListPane(String appName, final TagService<S, T> tagService, UndoService undoService, final boolean withExcludeBox) {
 		setPrefWidth(100);
 		itemPattern = "";
 		refreshTaskId = new AtomicLong();
@@ -103,13 +103,13 @@ public class SectionListPane<S extends Section, T extends Tag> extends VBox {
 		final StackPane centerPane = new StackPane(accordion);
 		centerPane.setAlignment(Pos.BOTTOM_CENTER);
 
-		final ExtItemDropPane<T> extItemDropPane = new ExtItemDropPane<>();
+		final ExtItemDropPane<T> extItemDropPane = new ExtItemDropPane<>(appName);
 		extItemDropPane.prefWidthProperty().bind(centerPane.widthProperty());
 
-		sectionDropPane = new SectionDropPane<>(tagService, undoService);
+		sectionDropPane = new SectionDropPane<>(appName, tagService, undoService);
 		sectionDropPane.prefWidthProperty().bind(centerPane.widthProperty());
 
-		tagDropPane = new TagDropPane<>(tagService, undoService);
+		tagDropPane = new TagDropPane<>(appName, tagService, undoService);
 		tagDropPane.prefWidthProperty().bind(centerPane.widthProperty());
 
 		centerPane.setOnDragEntered(e -> {
