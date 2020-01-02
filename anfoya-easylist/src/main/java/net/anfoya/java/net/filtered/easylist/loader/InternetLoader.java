@@ -2,10 +2,10 @@ package net.anfoya.java.net.filtered.easylist.loader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLStreamHandler;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +18,12 @@ import net.anfoya.java.net.filtered.easylist.parser.ParserException;
 public class InternetLoader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(InternetLoader.class);
 
+	private static final Set<URL> URLs;
+
+	static {
+		URLs = new HashSet<>();
+	}
+
 	private final URL url;
 
 	public InternetLoader(final URL url) {
@@ -25,21 +31,20 @@ public class InternetLoader {
 	}
 
 	public EasyListRuleSet load() {
+		if (URLs.contains(url)) {
+			URLs.remove(url);
+			return new EasyListRuleSet(false);
+		}
 		LOGGER.info("loading {}", url);
 		final long start = System.currentTimeMillis();
 		EasyListRuleSet easyList;
-		try {
-			// avoid handler factory re-entrance
-			final URLStreamHandler handler = "https".equals(url.getProtocol())
-					? new sun.net.www.protocol.https.Handler()
-					: new sun.net.www.protocol.http.Handler();
-			final InputStream in = new URL(null, url.toString(), handler).openStream();
-			final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
+		// avoid handler factory re-entrance
+		URLs.add(url);
+		try (final BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
 			easyList = new EasyListRuleSet(false);
 			final Parser parser = new Parser();
 			String line;
-			while((line=reader.readLine()) != null) {
+			while ((line = reader.readLine()) != null) {
 				try {
 					final Rule rule = parser.parse(line);
 					easyList.add(rule);
@@ -47,7 +52,7 @@ public class InternetLoader {
 					LOGGER.error("parsing {}", line, e);
 				}
 			}
-			LOGGER.info("loaded {} rules (in {}ms)", easyList.getRuleCount(), System.currentTimeMillis()-start);
+			LOGGER.info("loaded {} rules (in {}ms)", easyList.getRuleCount(), System.currentTimeMillis() - start);
 		} catch (final IOException e) {
 			LOGGER.error("reading {}", url, e);
 			easyList = new EasyListRuleSet(false);
