@@ -23,13 +23,16 @@ import net.anfoya.tag.service.TagService;
 public class SectionDropPane<S extends Section> extends GridPane {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SectionDropPane.class);
 
+	private final String appName;
 	private final TagService<S, ? extends Tag> tagService;
 	private final UndoService undoService;
 
 	private Runnable updateCallback;
 
-	public SectionDropPane(final TagService<S, ? extends Tag> tagService, UndoService undoService) {
+
+	public SectionDropPane(String appName, final TagService<S, ? extends Tag> tagService, UndoService undoService) {
 		getStyleClass().add("droparea-grid");
+		this.appName = appName;
 		this.tagService = tagService;
 		this.undoService = undoService;
 
@@ -65,7 +68,7 @@ public class SectionDropPane<S extends Section> extends GridPane {
 		String name = "";
 		while(name.isEmpty()) {
 			final TextInputDialog inputDialog = new TextInputDialog(section.getName());
-			inputDialog.setTitle("FisherMail");
+			inputDialog.setTitle(appName);
 			inputDialog.setHeaderText("rename \"" + section.getName() + "\"");
 			inputDialog.setContentText("new name");
 			final Optional<String> response = inputDialog.showAndWait();
@@ -75,7 +78,7 @@ public class SectionDropPane<S extends Section> extends GridPane {
 			name = response.get();
 			if (name.length() < 3) {
 				final Alert errorDialog = new Alert(AlertType.ERROR);
-				errorDialog.setTitle("FisherMail");
+				errorDialog.setTitle(appName);
 				errorDialog.setHeaderText("name is too short \"" + name + "\"");
 				errorDialog.setContentText("section should be a least 3 letters long.");
 				errorDialog.showAndWait();
@@ -103,23 +106,23 @@ public class SectionDropPane<S extends Section> extends GridPane {
 
 	private Void remove(final S section) {
 		final Alert warningDialog = new Alert(AlertType.WARNING, "", ButtonType.OK, ButtonType.CANCEL);
-		warningDialog.setTitle("FisherMail");
+		warningDialog.setTitle(appName);
 		warningDialog.setHeaderText("remove \"" + section.getName() + "\"?");
 		warningDialog.setContentText("can't be undone");
 		warningDialog.showAndWait()
-			.filter(r -> r == ButtonType.OK)
-			.ifPresent(r -> {
-				final Task<Void> task = new Task<Void>() {
-					@Override
-					protected Void call() throws Exception {
-						tagService.remove(section);
-						return null;
-					}
-				};
-				task.setOnSucceeded(event -> updateCallback.run());
-				task.setOnFailed(e -> LOGGER.error("remove section {}", section.getName(), e.getSource().getException()));
-				ThreadPool.getDefault().submit(PoolPriority.MAX, "remove section " + section.getName(), task);
-			});
+		.filter(r -> r == ButtonType.OK)
+		.ifPresent(r -> {
+			final Task<Void> task = new Task<Void>() {
+				@Override
+				protected Void call() throws Exception {
+					tagService.remove(section);
+					return null;
+				}
+			};
+			task.setOnSucceeded(event -> updateCallback.run());
+			task.setOnFailed(e -> LOGGER.error("remove section {}", section.getName(), e.getSource().getException()));
+			ThreadPool.getDefault().submit(PoolPriority.MAX, "remove section " + section.getName(), task);
+		});
 
 		return null;
 	}
