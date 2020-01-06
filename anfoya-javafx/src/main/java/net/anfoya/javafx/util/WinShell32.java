@@ -11,7 +11,7 @@ public class WinShell32 {
 	public static long setExplicitAppUserModelId(String id) {
 		return Shell32
 				.INSTANCE
-				.SetCurrentProcessExplicitAppUserModelID(new WString("FisherMail"))
+				.SetCurrentProcessExplicitAppUserModelID(new WString(id))
 				.longValue();
 	}
 
@@ -19,7 +19,7 @@ public class WinShell32 {
 		final PointerByReference pRef = new PointerByReference();
 		Shell32.INSTANCE.GetCurrentProcessExplicitAppUserModelID(pRef);
 
-		Pointer pointer = pRef.getValue();
+		final Pointer pointer = pRef.getValue();
 		final String currentId = pointer.getWideString(0);
 		Ole32.INSTANCE.CoTaskMemFree(pointer);
 

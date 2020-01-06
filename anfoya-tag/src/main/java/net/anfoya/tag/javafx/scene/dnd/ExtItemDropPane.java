@@ -18,7 +18,11 @@ public class ExtItemDropPane<T extends Tag> extends GridPane {
 	public static final DataFormat ADD_TAG_DATA_FORMAT = new DataFormat("ADD_TAG_DATA_FORMAT");
 	public static final DataFormat TAG_NAME_DATA_FORMAT = new DataFormat("TAG_NAME_DATA_FORMAT");
 
-	public ExtItemDropPane() {
+	private final String appName;
+
+	public ExtItemDropPane(String appName) {
+		this.appName = appName;
+
 		getStyleClass().add("droparea-grid");
 		setMaxHeight(65);
 
@@ -51,7 +55,7 @@ public class ExtItemDropPane<T extends Tag> extends GridPane {
 		String name = "";
 		while(name.isEmpty()) {
 			final TextInputDialog inputDialog = new TextInputDialog();
-			inputDialog.setTitle("FisherMail");
+			inputDialog.setTitle(appName);
 			inputDialog.setHeaderText("new label");
 			inputDialog.setContentText("name");
 			final Optional<String> response = inputDialog.showAndWait();
@@ -61,7 +65,7 @@ public class ExtItemDropPane<T extends Tag> extends GridPane {
 			name = response.get();
 			if (name.length() < 3) {
 				final Alert errorDialog = new Alert(AlertType.ERROR);
-				errorDialog.setTitle("FisherMail");
+				errorDialog.setTitle(appName);
 				errorDialog.setHeaderText("name is too short \"" + name + "\"");
 				errorDialog.setContentText("label should be a least 3 letters long.");
 				errorDialog.showAndWait();

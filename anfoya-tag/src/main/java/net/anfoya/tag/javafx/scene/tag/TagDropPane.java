@@ -28,6 +28,7 @@ import net.anfoya.tag.service.TagService;
 public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SectionDropPane.class);
 
+	private final String appName;
 	private final TagService<S, T> tagService;
 	private final UndoService undoService;
 	private final DndPaneTranslationHelper transHelper;
@@ -36,7 +37,8 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 
 	private final BooleanProperty systemProperty;
 
-	public TagDropPane(final TagService<S, T> tagService, UndoService undoService) {
+	public TagDropPane(String appName, final TagService<S, T> tagService, UndoService undoService) {
+		this.appName = appName;
 		getStyleClass().add("droparea-grid");
 		this.tagService = tagService;
 		this.undoService = undoService;
@@ -97,7 +99,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 		String name = "";
 		while(name.isEmpty()) {
 			final TextInputDialog inputDialog = new TextInputDialog();
-			inputDialog.setTitle("Fishermail");
+			inputDialog.setTitle(appName);
 			inputDialog.setHeaderText("new section");
 			inputDialog.setContentText("name");
 			final Optional<String> response = inputDialog.showAndWait();
@@ -107,7 +109,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 			name = response.get();
 			if (name.length() < 3) {
 				final Alert errorDialog = new Alert(AlertType.ERROR);
-				errorDialog.setTitle("Fishermail");
+				errorDialog.setTitle(appName);
 				errorDialog.setHeaderText("name is too short \"" + name + "\"");
 				errorDialog.setContentText("section should be a least 3 letters long.");
 				errorDialog.showAndWait();
@@ -137,7 +139,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 		String name = "";
 		while(name.isEmpty()) {
 			final TextInputDialog inputDialog = new TextInputDialog(tag.getName());
-			inputDialog.setTitle("FisherMail");
+			inputDialog.setTitle(appName);
 			inputDialog.setHeaderText("rename \"" + tag.getName() + "\"");
 			inputDialog.setContentText("new name");
 			final Optional<String> response = inputDialog.showAndWait();
@@ -147,7 +149,7 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 			name = response.get();
 			if (name.length() < 3) {
 				final Alert errorDialog = new Alert(AlertType.ERROR);
-				errorDialog.setTitle("FisherMail");
+				errorDialog.setTitle(appName);
 				errorDialog.setHeaderText("new name is too short \"" + name + "\"");
 				errorDialog.setContentText("label should be a least 3 letters long.");
 				errorDialog.showAndWait();
@@ -179,23 +181,23 @@ public class TagDropPane<S extends Section, T extends Tag> extends GridPane {
 		transHelper.reset();
 
 		final Alert warningDialog = new Alert(AlertType.WARNING, "", ButtonType.OK, ButtonType.CANCEL);
-		warningDialog.setTitle("FisherMail");
+		warningDialog.setTitle(appName);
 		warningDialog.setHeaderText("remove \"" + tag.getName() + "\"?");
 		warningDialog.setContentText("can't be undone");
 		warningDialog.showAndWait()
-			.filter(r -> r == ButtonType.OK)
-			.ifPresent(r -> {
-				final Task<Void> task = new Task<Void>() {
-					@Override
-					protected Void call() throws Exception {
-						tagService.remove(tag);
-						return null;
-					}
-				};
-				task.setOnSucceeded(event -> updateCallback.run());
-				task.setOnFailed(e -> LOGGER.error("remove {}", tag.getName(), e.getSource().getException()));
-				ThreadPool.getDefault().submit(PoolPriority.MAX, "remove " + tag.getName(), task);
-			});
+		.filter(r -> r == ButtonType.OK)
+		.ifPresent(r -> {
+			final Task<Void> task = new Task<Void>() {
+				@Override
+				protected Void call() throws Exception {
+					tagService.remove(tag);
+					return null;
+				}
+			};
+			task.setOnSucceeded(event -> updateCallback.run());
+			task.setOnFailed(e -> LOGGER.error("remove {}", tag.getName(), e.getSource().getException()));
+			ThreadPool.getDefault().submit(PoolPriority.MAX, "remove " + tag.getName(), task);
+		});
 
 		return null;
 	}
