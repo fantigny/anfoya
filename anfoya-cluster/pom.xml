@@ -43,10 +43,11 @@
 			<version>3.4.6.Final</version>
 		</dependency>
 
+		<!-- provided -->
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
-			<version>13.0.1</version>
+			<version>13</version>
 			<scope>provided</scope>
 		</dependency>
 
