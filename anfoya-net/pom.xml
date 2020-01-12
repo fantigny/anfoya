@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>anfoya-tools</artifactId>
-			<version>${revision}</version>
+			<version>${revision}${sha1}${changelist}</version>
 		</dependency>
 
 		<!-- others -->
