@@ -5,13 +5,17 @@
 	<prerequisites>
 		<maven>3.3</maven>
 	</prerequisites>
-	
+
 	<groupId>net.anfoya</groupId>
 	<artifactId>anfoya-libs</artifactId>
-	<version>${revision}</version>
+	<version>${revision}${sha1}${changelist}</version>
 	<packaging>pom</packaging>
+
 	<properties>
-		<revision>0.0.1-SNAPSHOT</revision>
+		<revision>0.0.1</revision>
+		<changelist />
+		<sha1 />
+		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -19,7 +23,32 @@
 		<profile>
 			<id>PROD</id>
 			<properties>
-				<revision>1.0.0-191231</revision>
+				<revision>1.0.0-200112</revision>
+			</properties>
+		</profile>
+		<profile>
+			<id>x64</id>
+			<activation>
+				<property>
+					<name>arch</name>
+					<value>!x86</value>
+				</property>
+			</activation>
+			<properties>
+				<compiler.release>11</compiler.release>
+			</properties>
+		</profile>
+		<profile>
+			<id>x86</id>
+			<activation>
+				<property>
+					<name>arch</name>
+					<value>x86</value>
+				</property>
+			</activation>
+			<properties>
+				<compiler.release>8</compiler.release>
+				<changelist>-x86</changelist>
 			</properties>
 		</profile>
 	</profiles>
@@ -60,8 +89,18 @@
 				</executions>
 			</plugin>
 		</plugins>
+
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.1</version>
+					<configuration>
+						<release>${compiler.release}</release>
+					</configuration>
+				</plugin>
+
 				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
