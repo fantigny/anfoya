@@ -31,7 +31,7 @@
 			<activation>
 				<property>
 					<name>arch</name>
-					<value>!x86</value>
+					<value>!x32</value>
 				</property>
 			</activation>
 			<properties>
@@ -39,16 +39,16 @@
 			</properties>
 		</profile>
 		<profile>
-			<id>x86</id>
+			<id>x32</id>
 			<activation>
 				<property>
 					<name>arch</name>
-					<value>x86</value>
+					<value>x32</value>
 				</property>
 			</activation>
 			<properties>
 				<compiler.release>8</compiler.release>
-				<changelist>-x86</changelist>
+				<changelist>-x32</changelist>
 			</properties>
 		</profile>
 	</profiles>
