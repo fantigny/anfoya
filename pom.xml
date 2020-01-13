@@ -12,10 +12,10 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<revision>0.0.1</revision>
+		<revision>0.0.1-SNAPSHOT</revision>
 		<changelist />
 		<sha1 />
-		
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -48,7 +48,7 @@
 			</activation>
 			<properties>
 				<compiler.release>8</compiler.release>
-				<changelist>-x32</changelist>
+				<changelist>_x32</changelist>
 			</properties>
 		</profile>
 	</profiles>
@@ -62,6 +62,36 @@
 		<module>anfoya-tag</module>
 		<module>anfoya-tools</module>
 	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>net.anfoya</groupId>
+				<artifactId>anfoya-tools</artifactId>
+				<version>${revision}${sha1}${changelist}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.anfoya</groupId>
+				<artifactId>anfoya-javafx</artifactId>
+				<version>${revision}${sha1}${changelist}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.anfoya</groupId>
+				<artifactId>anfoya-tag</artifactId>
+				<version>${revision}${sha1}${changelist}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.anfoya</groupId>
+				<artifactId>anfoya-net</artifactId>
+				<version>${revision}${sha1}${changelist}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.anfoya</groupId>
+				<artifactId>mail-browser</artifactId>
+				<version>${revision}${sha1}${changelist}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>
 		<plugins>

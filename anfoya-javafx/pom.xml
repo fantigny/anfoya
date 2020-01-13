@@ -19,9 +19,8 @@
 	<dependencies>
 		<!-- home made -->
 		<dependency>
-			<groupId>net.anfoya</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>anfoya-tools</artifactId>
-			<version>${revision}${sha1}${changelist}</version>
 		</dependency>
 
 		<!-- others -->
